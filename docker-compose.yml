@@ -1,0 +1,13 @@
+version: "2.4"
+
+services:
+  project:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - TF_CPP_MIN_LOG_LEVEL=2
+    runtime: $DOCKER_RUNTIME
+    volumes:
+      - .:/workspace

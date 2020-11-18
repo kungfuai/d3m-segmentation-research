@@ -1,0 +1,51 @@
+
+steps:
+  - id: Get our secret environment variables
+    name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args: ['-c', 'gcloud secrets versions access ${APP_SECRETS} >> .env.prod']
+  - id: Build the production image
+    name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '${_IMAGE_REPO_NAME}:latest', '.']
+  - id: Tag Production Image
+    name: 'gcr.io/cloud-builders/docker'
+    env:
+      - 'PROJECT_ID=${PROJECT_ID}'
+      - 'COMMIT_SHA=${COMMIT_SHA}'
+    entrypoint: 'bash'
+    args: ['tag', '${_IMAGE_REPO_NAME}:latest', 'gcr.io/${PROJECT_ID}/${_IMAGE_REPO_NAME}:${COMMIT_SHA}']
+  - id: Push Latest Production Image
+    name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${PROJECT_ID}/${_IMAGE_REPO_NAME}:latest']
+  - id: Push CommitHash Tagged Production Image
+    name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${PROJECT_ID}/${_IMAGE_REPO_NAME}:${COMMIT_SHA}']
+  - id: Convert prod secrets into JSON for terraform
+    name: 'gcr.io/cloud-builders/npm'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        npm i -g dotenv-to-json
+        cat .env.prod | dotenv-to-json >> .env.prod.tfvars.json
+  - id: tf init
+    name: 'hashicorp/terraform:${_TF_VERSION}'
+    args: ['init', '-input=false', './terraform/prod/']
+  - id: tf plan
+    name: 'hashicorp/terraform:${_TF_VERSION}'
+    args: ['plan', '-input=false', '-var-file=.env.prod.tfvars.json', '-out=plan.tfplan', './terraform/prod/']
+  - id: tf apply
+    name: 'hashicorp/terraform:${_TF_VERSION}'
+    args: ['apply', '-input=false', '-auto-approve', 'plan.tfplan']
+
+substitutions:
+  _TF_VERSION: 0.13.3
+  _IMAGE_REPO_NAME: <<NAME ME>
+
+options:
+  env:
+    - 'PROJECT_ID=$PROJECT_ID'
+    - 'COMMIT_SHA=$COMMIT_SHA'
+    - 'TF_IN_AUTOMATION=true'
+    - 'TF_VAR_commit_sha=$COMMIT_SHA'
+    - 'CI=true'

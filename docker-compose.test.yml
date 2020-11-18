@@ -1,0 +1,12 @@
+version: "2.4"
+
+services:
+  SERVICE_NAME:
+    image: SERVICE_NAME
+    build: .
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - TF_CPP_MIN_LOG_LEVEL=2
+    runtime: $DOCKER_RUNTIME
+    volumes:
+      - .:/workspace
