@@ -4,4 +4,4 @@
 
 source bin/set_docker_runtime.sh
 
-docker-compose run --rm --service-ports SERVICE_NAME bash
+docker-compose run --rm --service-ports project bash

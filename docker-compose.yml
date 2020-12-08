@@ -11,3 +11,5 @@ services:
     runtime: $DOCKER_RUNTIME
     volumes:
       - .:/workspace
+    ports:
+      - "6006:6006"

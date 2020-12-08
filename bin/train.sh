@@ -6,5 +6,5 @@
 
 source bin/set_docker_runtime.sh
 
-docker-compose run --rm SERVICE_NAME \
+docker-compose run --rm project \
   python -m src.training.training_session "$@"

@@ -1,7 +1,4 @@
-# Default pytorch or tensorflow
-
-FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel
-# FROM tensorflow/tensorflow:2.3.0
+FROM tensorflow/tensorflow:2.2.0
 
 WORKDIR /workspace
 
