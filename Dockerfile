@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.2.0
+FROM tensorflow/tensorflow:2.2.0-gpu
 
 WORKDIR /workspace
 

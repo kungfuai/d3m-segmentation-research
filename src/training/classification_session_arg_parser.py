@@ -48,7 +48,7 @@ class ClassificationSessionArgParser(ArgumentParser):
         self.add_argument(
             "--shuffle_buffer_size",
             type=int,
-            default=130000,
+            default=10000,
             help="Shuffle buffer size for training dataset",
         )
         self.add_argument(

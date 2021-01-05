@@ -19,7 +19,10 @@ class SegmentationDataset:
 
         dataset = tf.data.TFRecordDataset(TFRecord_paths)
         if shuffle_buffer_size:
-            dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
+            dataset = dataset.shuffle(
+                buffer_size=shuffle_buffer_size,
+                reshuffle_each_iteration=True
+            )
 
         dataset = dataset.map(
             lambda x: self.parse_function(x, nb_class), 

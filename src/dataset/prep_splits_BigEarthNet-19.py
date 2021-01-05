@@ -25,7 +25,7 @@ GDAL_EXISTED = False
 RASTERIO_EXISTED = False
 UPDATE_JSON = False
 
-with open('label_indices.json', 'rb') as f:
+with open('data/label_indices.json', 'rb') as f:
     label_indices = json.load(f)
 
 if __name__ == "__main__":
