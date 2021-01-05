@@ -23,14 +23,7 @@
   <h3 align="center">KUNGFU.AI Project Template</h3>
 
   <p align="center">
-    Your awesome ML project!
-    <br />
-    <a href=""><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="">View Demo</a>
-    ·
-    <a href="">Report Bug</a>
+    Semantic Segmentation Transfer Learning Experiments
   </p>
 </p>
 
@@ -39,32 +32,11 @@
 <!-- TABLE OF CONTENTS -->
 ## Table of Contents
 
-* [About the Project](#about-the-project)
-  * [Built With](#built-with)
 * [Getting Started](#getting-started)
   * [Prerequisites](#prerequisites)
   * [Installation](#installation)
-* [Usage](#usage)
-* [Roadmap](#roadmap)
-* [Contributing](#contributing)
 * [License](#license)
-* [Contact](#contact)
 * [Acknowledgements](#acknowledgements)
-
-
-
-<!-- ABOUT THE PROJECT -->
-## About The Project
-
-<!-- [![Product Name Screen Shot][product-screenshot]](https://example.com) -->
-
-
-### Built With
-This section should list any major frameworks that you built your project using. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-* [Bootstrap](https://getbootstrap.com)
-* [JQuery](https://jquery.com)
-* [Laravel](https://laravel.com)
-
 
 
 <!-- GETTING STARTED -->
@@ -117,27 +89,6 @@ pre-commit install
 bin/build.sh
 ```
 
-#### Unit Tests
-
-Once the Docker image is built we can run the project's unit tests to verify everything is
-working. The `bin/test.sh` script will start a Docker container and execute all unit tests using
-the [pytest framework](https://docs.pytest.org/en/latest/).
-
-```sh
-# run all tests
-$ bin/test.sh
-```
-
-By default pytest captures all output sent to `stdout` and `stderr` during test execution. This
-can be disabled by passing the `-s` option.
-
-```sh
-# run tests with capture disabled and verbose
-$ bin/test.sh -s -vv
-```
-
-You can see a complete list of test configuration options using `--help`.
-
 #### Interactive Shell
 
 The `bin/shell.sh` script starts a Docker container in interactive mode and drops you into a bash
@@ -148,57 +99,43 @@ prompt. This can be useful when using an interactive debugger to step through co
 $ bin/shell.sh
 ```
 
-### Training
+### Train Classification Model
 
-Run the training script to train a new model from scratch.
-
-```sh
-$ bin/train.sh
-```
-
-### Prediction
-
-Run the prediction script to run a trained model on a dataset.
+Run the classification training script to train a new classification model from scratch.
 
 ```sh
-$ bin/predict.sh
+$ bin/train-classification.sh
 ```
 
-<!-- USAGE EXAMPLES -->
-## Usage
+### Train Segmentation Model
 
-In Progress
+Run the segmentation training script to train a segmentation model starting from the classifcation model.
 
+```sh
+$ bin/train-segmentation.sh
+```
 
-<!-- ROADMAP -->
-## Roadmap
+### Evaluation
 
-In progress
+Run the evaluation script to evaluate a trained segmentation model.
 
-<!-- CONTRIBUTING -->
-## Contributing
+```sh
+$ bin/evaluate.sh
+```
 
-Any contributions you make are **greatly appreciated**.
+### Run Experiment
 
-1. Create your Feature Branch (`git checkout -b <your name>/<your feature name>`)
-2. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-3. Push to the Branch (`git push origin feature/AmazingFeature`)
-4. Open a Pull Request
+Run the experiment script to run segmentation and evaluation sessions while varying types of supervision and dataset size.
 
+```sh
+$ bin/experiment.sh
+```
 
 
 <!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
-
-
-
-<!-- CONTACT -->
-## Contact
-
-
-
 
 
 <!-- ACKNOWLEDGEMENTS -->
