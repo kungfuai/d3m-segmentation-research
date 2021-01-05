@@ -76,7 +76,6 @@ def create_split(root_folder, patch_names, TFRecord_writer, label_indices, GDAL_
         patch_json_path = os.path.join(
             patch_folder_path, patch_name + '_labels_metadata.json')
 
-        print(patch_json_path)
         with open(patch_json_path, 'rb') as f:
             patch_json = json.load(f)
 
@@ -95,7 +94,6 @@ def create_split(root_folder, patch_names, TFRecord_writer, label_indices, GDAL_
 
         if UPDATE_JSON:
             patch_json['BigEarthNet_19_labels'] = BigEarthNet_19_labels
-            print(patch_json)
             with open(patch_json_path, 'w', encoding='utf8') as f:
                 json.dump(patch_json, f)
 

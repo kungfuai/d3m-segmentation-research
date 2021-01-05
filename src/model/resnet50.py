@@ -1,3 +1,5 @@
+import os
+
 from tensorflow.keras import backend, layers, models, utils
 
 def identity_block(input_tensor, kernel_size, filters, stage, block):
@@ -9,6 +11,7 @@ def identity_block(input_tensor, kernel_size, filters, stage, block):
         bn_axis = 1
     conv_name_base = 'res' + str(stage) + block + '_branch'
     bn_name_base = 'bn' + str(stage) + block + '_branch'
+    act_name_base = 'activation' + str(stage) + block
 
     x = layers.Conv2D(filters1, (1, 1),
                       kernel_initializer='he_normal',
@@ -29,7 +32,7 @@ def identity_block(input_tensor, kernel_size, filters, stage, block):
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
 
     x = layers.add([x, input_tensor])
-    x = layers.Activation('relu')(x)
+    x = layers.Activation('relu', name=act_name_base)(x)
     return x
 
 
@@ -47,6 +50,7 @@ def conv_block(input_tensor,
         bn_axis = 1
     conv_name_base = 'res' + str(stage) + block + '_branch'
     bn_name_base = 'bn' + str(stage) + block + '_branch'
+    act_name_base = 'act' + str(stage) + block
 
     x = layers.Conv2D(filters1, (1, 1), strides=strides,
                       kernel_initializer='he_normal',
@@ -72,7 +76,7 @@ def conv_block(input_tensor,
         axis=bn_axis, name=bn_name_base + '1')(shortcut)
 
     x = layers.add([x, shortcut])
-    x = layers.Activation('relu')(x)
+    x = layers.Activation('relu', name=act_name_base)(x)
     return x
 
 def ResNet50(include_top=True,
@@ -85,7 +89,7 @@ def ResNet50(include_top=True,
 
     if not (weights in {None} or os.path.exists(weights)):
         raise ValueError('The `weights` argument should be either '
-                         '`None` (random initialization),'
+                         '`None` (random initialization), '
                          'or the path to the weights file to be loaded.')
     
     if input_tensor is None:
@@ -108,7 +112,7 @@ def ResNet50(include_top=True,
                       kernel_initializer='he_normal',
                       name='conv1')(x)
     x = layers.BatchNormalization(axis=bn_axis, name='bn_conv1')(x)
-    x = layers.Activation('relu')(x)
+    x = layers.Activation('relu', name='activation1')(x)
     x = layers.ZeroPadding2D(padding=(1, 1), name='pool1_pad')(x)
     x = layers.MaxPooling2D((3, 3), strides=(2, 2))(x)
 
@@ -141,8 +145,10 @@ def ResNet50(include_top=True,
         elif pooling == 'max':
             x = layers.GlobalMaxPooling2D()(x)
         else:
-            warnings.warn('The output shape of `ResNet50(include_top=False)` '
-                          'has been changed since Keras 2.2.0.')
+            pass
+        # else:
+        #     warnings.warn('The output shape of `ResNet50(include_top=False)` '
+        #                   'has been changed since Keras 2.2.0.')
 
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
@@ -155,6 +161,6 @@ def ResNet50(include_top=True,
 
     # Load weights.
     if weights is not None:
-        model.load_weights(weights)
+        model.load_weights(weights, by_name=True)
 
     return model

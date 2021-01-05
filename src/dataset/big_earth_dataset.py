@@ -65,7 +65,7 @@ class BigEarthDataset:
         dataset = dataset.batch(batch_size, drop_remainder=False)
 
         self.dataset = dataset.prefetch(10)
-        self.class_weights = self.class_weights()
+        self.class_weights = self.class_weights(nb_class)
 
     def parse_function(self, example_proto, nb_class = 5):
 
@@ -134,9 +134,9 @@ class BigEarthDataset:
         )
         return img, img_dict['BigEarthNet-19_labels_multi_hot']
 
-    def class_weights(self):
+    def class_weights(self, nb_class):
         
-        class_counts = np.zeros(5)
+        class_counts = np.zeros(nb_class)
         for batch in self.dataset:
             labels = batch[1].numpy()
             class_counts += labels.sum(axis=0)

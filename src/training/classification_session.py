@@ -4,15 +4,15 @@ import logging
 import numpy as np
 import tensorflow as tf
 
-from src.training.training_session_arg_parser import TrainingSessionArgParser
+from src.training.classification_session_arg_parser import ClassificationSessionArgParser
 from src.dataset.big_earth_dataset import BigEarthDataset
 from src.model.resnet50 import ResNet50
 
 LOGGER = logging.getLogger(__name__)
 
 
-class TrainingSession:
-    """Responsible for model training setup and configuration."""
+class ClassificationSession:
+    """Responsible for classification model setup and configuration."""
 
     def __init__(self, args):
         self.args = args
@@ -66,7 +66,6 @@ class TrainingSession:
             loss=tf.keras.losses.BinaryCrossentropy(),
             metrics=[
                 'accuracy',
-                tf.keras.metrics.AUC(),
                 tf.keras.metrics.Precision(),
                 tf.keras.metrics.Recall()
             ]
@@ -78,14 +77,16 @@ class TrainingSession:
             class_weight=self.class_weights,
             epochs=self.args.epochs,
             validation_data=self.val_dataset,
+            validation_steps=self.args.validation_steps,
             callbacks=[
                 tf.keras.callbacks.CSVLogger(os.path.join(self.args.log_dir, 'metrics.csv')), 
                 tf.keras.callbacks.EarlyStopping(patience=self.args.patience), 
                 tf.keras.callbacks.ReduceLROnPlateau(), 
                 tf.keras.callbacks.TensorBoard(self.args.log_dir),
                 tf.keras.callbacks.ModelCheckpoint(
-                    os.path.join(self.args.log_dir, 'model.ckpt'),
-                    save_best_only=True
+                    os.path.join(self.args.log_dir, 'model.h5'),
+                    save_best_only=True,
+                    save_weights_only=True
                 )
             ],
             workers=self.args.workers,
@@ -94,6 +95,6 @@ class TrainingSession:
 
 
 if __name__ == "__main__":
-    args = TrainingSessionArgParser().parse_args()
-    session = TrainingSession(args)
+    args = ClassificationSessionArgParser().parse_args()
+    session = ClassificationSession(args)
     session.run()

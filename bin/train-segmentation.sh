@@ -7,4 +7,4 @@
 source bin/set_docker_runtime.sh
 
 docker-compose run --rm project \
-  python -m src.training.training_session "$@"
+  python -m src.training.segmentation_session "$@"
