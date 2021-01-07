@@ -67,10 +67,9 @@ class ProxyCorrelationPlotter:
                     'metrics', 
                     f'correlation-{condition}-{metric}.png'
                 )
-                #plt.xscale('log')
 
                 correlation = data[f"segmentation {metric}"].corr(data[f"proxy task {metric}"])
-                plt.title(f'correlation {correlation}')
+                plt.title(f'condition: {condition}, correlation: {round(correlation, 3)}')
                 plt.savefig(f)
 
 
