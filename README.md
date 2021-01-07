@@ -109,7 +109,7 @@ $ bin/train-classification.sh
 
 ### Train Segmentation Model
 
-Run the segmentation training script to train a segmentation model starting from the classifcation model.
+Run the segmentation training script to train a segmentation model starting from the classification model.
 
 ```sh
 $ bin/train-segmentation.sh

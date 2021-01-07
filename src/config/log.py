@@ -33,7 +33,7 @@ def get_logging_handlers(logfile_path: str = "logs/logs.txt"):
     file_handler.setLevel(logging.INFO)
 
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(logging.INFO)
 
     file_handler.setFormatter(default_formatter)
     console_handler.setFormatter(default_formatter)

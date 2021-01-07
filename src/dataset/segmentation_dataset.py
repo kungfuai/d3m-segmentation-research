@@ -11,7 +11,8 @@ class SegmentationDataset:
         one_image_label: bool = False,
         nb_class: int = 5,
         batch_size: int = 64, 
-        shuffle_buffer_size: int = 100
+        shuffle_buffer_size: int = 100,
+        normalize: bool = True
     ):
 
         self.one_pixel_mask = one_pixel_mask
@@ -29,12 +30,11 @@ class SegmentationDataset:
             num_parallel_calls=10
         )
 
-        dataset = dataset.map(
-            lambda x: self.normalize(x, nb_class), 
-            num_parallel_calls=10
-        )
-
-        #dataset = dataset.apply(tf.data.experimental.ignore_errors())
+        if normalize:
+            dataset = dataset.map(
+                lambda x: self.normalize(x, nb_class), 
+                num_parallel_calls=10
+            )
 
         dataset = dataset.batch(batch_size, drop_remainder=False)
         self.dataset = dataset.prefetch(10)
