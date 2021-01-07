@@ -50,7 +50,7 @@ class ExperimentSessionArgParser(ArgumentParser):
         self.add_argument(
             "--batch_size",
             type=int,
-            default=256,
+            default=128,
             help="Number of training examples used per batch",
         )
         self.add_argument(

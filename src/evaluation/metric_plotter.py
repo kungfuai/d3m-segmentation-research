@@ -30,7 +30,7 @@ class MetricPlotter:
                 dataset_size, condition = self.parse_dir_name(d)
                 metric_file = os.path.join(d, 'eval', 'metrics.json')
                 data = pd.DataFrame([pd.read_json(metric_file, typ='series')])
-                data['dataset size'] = dataset_size
+                data['dataset size'] = int(dataset_size)
                 data['condition'] = condition
                 metrics.append(data)
         metrics = pd.concat(metrics).reset_index()
@@ -44,7 +44,7 @@ class MetricPlotter:
                 data=metrics
             )
             f = os.path.join(self.args.experiment_dir, 'metrics', f'metrics-{metric}.png')
-            #plt.xscale('log')
+            plt.xscale('log')
             plt.savefig(f)
 
     @staticmethod

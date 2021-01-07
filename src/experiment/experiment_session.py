@@ -28,10 +28,11 @@ class ExperimentSession:
                 train_args = self.set_train_args(train_size, condition)
                 eval_args = self.set_eval_args(train_size, condition)
 
-                print(f'\nRunning training session {i+j+1} -- TRAIN SIZE = {train_size}, CONDITION = {condition}\n')
+                n = i * len(self.args.conditions) + j + 1
+                print(f'\nRunning training session {n} -- TRAIN SIZE = {train_size}, CONDITION = {condition}\n')
                 training_session = SegmentationSession(train_args).run()
 
-                print(f'\nRunning evaluation session {i+j+1} -- TRAIN SIZE = {train_size}, CONDITION = {condition}\n')
+                print(f'\nRunning evaluation session {n} -- TRAIN SIZE = {train_size}, CONDITION = {condition}\n')
                 evaluation_session = EvaluationSession(eval_args).run()
 
     def set_train_args(self, train_size, condition):
