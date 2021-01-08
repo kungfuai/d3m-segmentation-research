@@ -19,13 +19,19 @@ class MaskPlotterArgParser(ArgumentParser):
         self.add_argument(
             "--n_examples",
             type=int,
-            default=2,
+            default=10,
             help="Number of segmentation masks to plot/compare",
+        )
+        self.add_argument(
+            "--batch_no",
+            type=int,
+            default=1,
+            help="Batch number to plot/compare (1-indexed)",
         )
         self.add_argument(
             "--test_records",
             type=str,
-            default='data/prepped/segmentation-train-10.tfrecord',
+            default='data/prepped/segmentation-test.tfrecord',
             help="TF Records file for test dataset",
         )
         self.add_argument(

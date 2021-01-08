@@ -59,15 +59,17 @@ class MaskPlotter:
         )
 
     def load_data(self):
-        test_dataset_raw = SegmentationDataset(
+        test_dataset_raw = iter(SegmentationDataset(
             self.args.test_records,
             nb_class=self.args.num_classes,
             batch_size=self.args.n_examples,
             shuffle_buffer_size=0,
             normalize=False
-        ).dataset
+        ).dataset)
 
-        img_dict = list(test_dataset_raw.take(1))[0]
+        for _ in range(self.args.batch_no):
+            img_dict = next(test_dataset_raw)
+
         imgs = np.stack(
             [img_dict['B04'], img_dict['B03'], img_dict['B02']],
             axis=-1
@@ -75,21 +77,20 @@ class MaskPlotter:
         self.imgs = (imgs / 4096) ** 0.5 * 255
         self.labels = [img_dict['Corine_labels']]
 
-        self.test_dataset = SegmentationDataset(
+        self.test_dataset = iter(SegmentationDataset(
             self.args.test_records,
             nb_class=self.args.num_classes,
             batch_size=self.args.n_examples,
             shuffle_buffer_size=0,
-        ).dataset
+        ).dataset)
 
     def create_models(self):
 
         self.models = {}
-        for f in os.listdir(self.args.experiment_dir):
+        for f in sorted(os.listdir(self.args.experiment_dir)):
             d = os.path.join(self.args.experiment_dir, f)
             if os.path.isdir(d) and d.split('/')[-1] != 'metrics':
                 dataset_size, condition = MetricPlotter.parse_dir_name(d)
-                
                 one_image_label = (condition=='one_image_label')
 
                 model = Unet(
@@ -117,7 +118,8 @@ class MaskPlotter:
         
     def make_predictions(self):
         
-        batch = next(iter(self.test_dataset))
+        for _ in range(self.args.batch_no):
+            batch = next(self.test_dataset)
 
         self.masks = []
         for _, models in self.models.items():
@@ -135,14 +137,13 @@ class MaskPlotter:
             'Sentinel-2 Image', 
             'Ground Truth (Corine)',
             'Full Pixel Mask',
-            'One Pixel Mask',
-            'One Image Label'
+            'One Image Label',
+            'One Pixel Mask'
         ]
 
         for ds_size, masks in zip(self.models.keys(), self.masks):
             plt.clf()
             plt.figure(figsize=(3 * cols, 3 * rows))
-            plt.title(f'Segmentation Masks - Dataset Size {ds_size}')
 
             for row in range(rows): 
                 for col, col_title in zip(range(cols), col_titles[:cols]):
@@ -185,7 +186,7 @@ class MaskPlotter:
                             )
 
             plt.savefig(
-                f'mask-{ds_size}.png', # TODO save in metrics folder
+                os.path.join(self.args.experiment_dir, 'metrics', f'masks-{ds_size}.png'),
                 bbox_inches='tight', 
                 pad_inches=0.5
             )

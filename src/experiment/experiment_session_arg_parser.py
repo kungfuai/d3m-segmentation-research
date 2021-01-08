@@ -56,7 +56,7 @@ class ExperimentSessionArgParser(ArgumentParser):
         self.add_argument(
             "--epochs_frozen",
             type=int,
-            default=10,
+            default=20,
             help="Number of full training passes with frozen encoder weights",
         )
         self.add_argument(
@@ -68,7 +68,7 @@ class ExperimentSessionArgParser(ArgumentParser):
         self.add_argument(
             "--patience",
             type=int,
-            default=5,
+            default=10,
             help="Number of epochs without improvement after which training stops",
         )
         self.add_argument(
