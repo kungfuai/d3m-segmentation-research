@@ -26,7 +26,7 @@ class MetricPlotter:
         metrics = []
         for f in os.listdir(self.args.experiment_dir):
             d = os.path.join(self.args.experiment_dir, f)
-            if os.path.isdir(d) and d.split('/')[-1] != 'metrics':
+            if os.path.isdir(d) and d.split('/')[-1] not in ['metrics', 'confusion-matrices']:
                 dataset_size, condition = self.parse_dir_name(d)
                 metric_file = os.path.join(d, 'eval', 'metrics.json')
                 data = pd.DataFrame([pd.read_json(metric_file, typ='series')])
@@ -45,6 +45,7 @@ class MetricPlotter:
             )
             f = os.path.join(self.args.experiment_dir, 'metrics', f'metrics-{metric}.png')
             plt.xscale('log')
+            plt.title(f'Change in segementation {metric} as dataset size increases')
             plt.savefig(f)
 
     @staticmethod

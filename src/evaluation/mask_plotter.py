@@ -89,7 +89,7 @@ class MaskPlotter:
         self.models = {}
         for f in sorted(os.listdir(self.args.experiment_dir)):
             d = os.path.join(self.args.experiment_dir, f)
-            if os.path.isdir(d) and d.split('/')[-1] != 'metrics':
+            if os.path.isdir(d) and d.split('/')[-1] not in ['metrics', 'confusion-matrices']:
                 dataset_size, condition = MetricPlotter.parse_dir_name(d)
                 one_image_label = (condition=='one_image_label')
 

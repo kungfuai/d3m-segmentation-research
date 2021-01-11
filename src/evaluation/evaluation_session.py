@@ -6,6 +6,7 @@ import json
 import numpy as np
 import tensorflow as tf
 import segmentation_models as sm
+from sklearn.metrics import confusion_matrix
 
 from src.evaluation.evaluation_session_arg_parser import EvaluationSessionArgParser
 from src.dataset.segmentation_dataset import SegmentationDataset
@@ -71,6 +72,7 @@ class EvaluationSession:
         acc_metric = tf.keras.metrics.CategoricalAccuracy()
 
         batch_sizes = []
+        confusion = np.zeros((self.args.num_classes, self.args.num_classes))
         for batch in self.test_dataset:
             batch_sizes.append(batch[1].shape[0])
             preds = self.model.predict_on_batch(batch)
@@ -83,6 +85,10 @@ class EvaluationSession:
             metrics['accuracy'].append(acc)
             metrics['iou_score'].append(iou)
 
+            gt = tf.reshape(tf.math.argmax(batch[1], 3)[:, 1:-1, 1:-1], [-1])
+            p = tf.reshape(tf.math.argmax(preds, 3)[:, 1:-1, 1:-1], [-1])
+            confusion += confusion_matrix(gt, p)
+
         metrics = {
             metric: np.average(vals, weights=batch_sizes) 
             for metric, vals in metrics.items()
@@ -90,6 +96,14 @@ class EvaluationSession:
 
         with open(os.path.join(self.args.log_dir, "metrics.json"), "w") as f:  
             json.dump(metrics, f) 
+
+        confusion /= confusion.sum(axis=0)[np.newaxis,:]
+
+        np.savetxt(
+            os.path.join(self.args.log_dir, "confusion.csv"), 
+            confusion, 
+            delimiter=","
+        )
 
 
 if __name__ == "__main__":
