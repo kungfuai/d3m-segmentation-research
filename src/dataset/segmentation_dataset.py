@@ -127,6 +127,11 @@ class SegmentationDataset:
                 "CONSTANT",
                 constant_values=-1
             )
-        labels = tf.one_hot(labels, nb_class)
-        return img, labels
+        one_hots = tf.one_hot(labels, nb_class)
+
+        if self.one_pixel_mask
+            return img, one_hots, labels
+        
+        else:
+            return img, one_hots
 
