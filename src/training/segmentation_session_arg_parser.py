@@ -99,3 +99,9 @@ class SegmentationSessionArgParser(ArgumentParser):
             default=False,
             help="If True - train with one image-level label supervision per image",
         )
+        self.add_argument(
+            "--loss_function",
+            type=str,
+            default='focal',
+            help="Loss function to use for segmentation training - options are 'focal' and 'xent'",
+        )

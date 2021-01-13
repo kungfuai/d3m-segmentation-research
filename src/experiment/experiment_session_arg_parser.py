@@ -89,3 +89,9 @@ class ExperimentSessionArgParser(ArgumentParser):
             default='logs/',
             help="Parameters of trained classification model",
         )
+        self.add_argument(
+            "--loss_function",
+            type=str,
+            default='focal',
+            help="Loss function to use for segmentation training - options are 'focal' and 'xent'",
+        )

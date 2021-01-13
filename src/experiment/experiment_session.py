@@ -58,6 +58,7 @@ class ExperimentSession:
         setattr(train_args, "workers", self.args.workers)
         setattr(train_args, "validation_steps", self.args.validation_steps)
         setattr(train_args, "encoder_weights", self.args.encoder_weights)
+        setattr(train_args, "loss_function", self.args.loss_function)
 
         log_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}', 'train')
         os.makedirs(log_dir, exist_ok=True)

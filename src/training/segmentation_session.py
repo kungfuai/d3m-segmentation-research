@@ -6,7 +6,6 @@ import numpy as np
 import tensorflow as tf
 import segmentation_models as sm
 
-
 from src.training.segmentation_session_arg_parser import SegmentationSessionArgParser
 from src.dataset.segmentation_dataset import SegmentationDataset
 from src.model.unet import Unet
@@ -49,20 +48,25 @@ class SegmentationSession:
         os.makedirs(self.args.log_dir, exist_ok=True)
 
     def load_data(self):
-        self.train_dataset = SegmentationDataset(
+        segmentation = SegmentationDataset(
             self.args.train_records,
             one_pixel_mask=self.args.one_pixel_mask,
             one_image_label=self.args.one_image_label,
+            loss_function=self.args.loss_function,
             nb_class=self.args.num_classes,
             batch_size=self.args.batch_size,
             shuffle_buffer_size=self.args.shuffle_buffer_size
-        ).dataset
+        )
+
+        self.train_dataset = segmentation.dataset
+        self.class_weights = segmentation.class_weights
 
         if self.args.val_records:
             self.val_dataset = SegmentationDataset(
                 self.args.val_records,
                 one_pixel_mask=self.args.one_pixel_mask,
                 one_image_label=self.args.one_image_label,
+                loss_function=self.args.loss_function,
                 nb_class=self.args.num_classes,
                 batch_size=self.args.batch_size,
                 shuffle_buffer_size=0 # don't shuffle during validation
@@ -80,12 +84,23 @@ class SegmentationSession:
         )
 
     def compile_model(self):
+        if self.args.loss_function == 'focal':
+            loss = sm.losses.categorical_focal_loss
+            self.class_weights = None
+        elif self.args.loss_function == 'xent':
+            if self.args.one_image_label:
+                loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+            else:
+                loss = sm.losses.CategoricalCELoss(class_weights=self.class_weights)
+                self.class_weights = None
+        else:
+            raise ValueError("'loss_function' must be one of 'focal' or 'xent'")
+
         self.model.compile(
             optimizer='adam',
-            loss=sm.losses.categorical_focal_loss,
+            loss=loss,
             metrics=[
                 'categorical_accuracy', 
-                sm.metrics.iou_score,
             ], 
         )
 
@@ -94,6 +109,7 @@ class SegmentationSession:
             self.train_dataset,
             initial_epoch=initial_epoch,
             epochs=epochs,
+            class_weight=self.class_weights,
             validation_data=self.val_dataset,
             validation_steps=self.args.validation_steps,
             callbacks=[

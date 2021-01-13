@@ -9,6 +9,7 @@ class SegmentationDataset:
         TFRecord_paths, 
         one_pixel_mask: bool = False,
         one_image_label: bool = False,
+        loss_function: str = 'focal',
         nb_class: int = 5,
         batch_size: int = 64, 
         shuffle_buffer_size: int = 100,
@@ -17,6 +18,7 @@ class SegmentationDataset:
 
         self.one_pixel_mask = one_pixel_mask
         self.one_image_label = one_image_label
+        self.loss_function = loss_function
 
         dataset = tf.data.TFRecordDataset(TFRecord_paths)
         if shuffle_buffer_size:
@@ -38,6 +40,8 @@ class SegmentationDataset:
 
         dataset = dataset.batch(batch_size, drop_remainder=False)
         self.dataset = dataset.prefetch(10)
+
+        self.class_weights = self.class_weights(nb_class)
 
     def parse_function(self, example_proto, nb_class):
 
@@ -118,6 +122,16 @@ class SegmentationDataset:
                 value = tf.gather_nd(img_dict['Corine_labels'], pixel)
                 labels = tf.zeros((126, 126), dtype=tf.int64) - 1
                 labels = tf.tensor_scatter_nd_update(labels, pixel, value)
+                mask = tf.tensor_scatter_nd_update(
+                    tf.zeros((126, 126), dtype=tf.int64),
+                    pixel,
+                    tf.ones((1,), dtype=tf.int64)
+                )
+                mask = tf.pad(
+                    mask, 
+                    tf.constant([[1,1], [1,1]]),
+                    "CONSTANT",
+                )
             else:
                 labels = img_dict['Corine_labels']
                 
@@ -127,11 +141,33 @@ class SegmentationDataset:
                 "CONSTANT",
                 constant_values=-1
             )
+
         one_hots = tf.one_hot(labels, nb_class)
 
-        if self.one_pixel_mask
-            return img, one_hots, labels
-        
+        if self.one_pixel_mask:
+            return img, one_hots, mask
+        elif self.one_image_label and self.loss_function == 'xent':
+            return img, labels
         else:
             return img, one_hots
+
+    def class_weights(self, nb_class):
+        
+        labels = []
+        for batch in self.dataset:
+            labels.append(tf.where(batch[1] == 1)[:,-1])
+        counts = np.bincount(np.concatenate(labels))
+        weights = 1 / (counts + 1)
+
+        if weights.shape[0] < nb_class:
+            extend = np.ones(nb_class - weights.shape[0])
+            weights = np.concatenate((weights, extend))
+        
+        weights /= np.max(weights)
+
+        if self.one_image_label:
+            return {i: w for i, w in enumerate(weights)}
+        else:
+            return weights
+
 
