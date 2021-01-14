@@ -41,7 +41,8 @@ class SegmentationDataset:
         dataset = dataset.batch(batch_size, drop_remainder=False)
         self.dataset = dataset.prefetch(10)
 
-        self.class_weights = self.class_weights(nb_class)
+        if normalize:
+            self.class_weights = self.class_weights(nb_class)
 
     def parse_function(self, example_proto, nb_class):
 

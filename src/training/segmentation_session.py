@@ -90,18 +90,24 @@ class SegmentationSession:
         elif self.args.loss_function == 'xent':
             if self.args.one_image_label:
                 loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+                metric = tf.keras.metrics.SparseCategoricalAccuracy()
             else:
                 loss = sm.losses.CategoricalCELoss(class_weights=self.class_weights)
+                metric = 'categorical_accuracy'
                 self.class_weights = None
         else:
             raise ValueError("'loss_function' must be one of 'focal' or 'xent'")
 
+        if self.args.one_pixel_mask:
+            loss_weights = [128*128]
+        else:
+            loss_weights = None
+
         self.model.compile(
             optimizer='adam',
             loss=loss,
-            metrics=[
-                'categorical_accuracy', 
-            ], 
+            loss_weights=loss_weights,
+            metrics=[metric],
         )
 
     def train(self, epochs, initial_epoch=0):

@@ -37,23 +37,23 @@ class ProxyCorrelationPlotter:
                     data = pd.DataFrame([pd.read_json(real_metric_file, typ='series')])
                     data = data.rename(columns={
                         'accuracy': "segmentation accuracy",
-                        'iou_score': 'segmentation iou_score'
+                        #'iou_score': 'segmentation iou_score'
                     })
 
                     proxy_metric_file = os.path.join(d, 'train', 'metrics.csv')
                     proxy_data = pd.read_csv(proxy_metric_file)
                     proxy_acc = proxy_data['val_categorical_accuracy'].values[-1]
-                    proxy_iou = proxy_data['val_iou_score'].values[-1]
+                    #proxy_iou = proxy_data['val_iou_score'].values[-1]
 
                     data['proxy task accuracy'] = proxy_acc
-                    data['proxy task iou_score'] = proxy_iou
+                    #data['proxy task iou_score'] = proxy_iou
                     data['condition'] = condition
 
                     metrics.append(data)
 
         metrics = pd.concat(metrics).reset_index()
 
-        for metric in ['accuracy', 'iou_score']:
+        for metric in ['accuracy']:#, 'iou_score']:
             for condition in ['full_pixel_mask', 'one_pixel_mask', 'one_image_label']:
                 data = metrics[metrics['condition'] == condition]
                 plt.clf()

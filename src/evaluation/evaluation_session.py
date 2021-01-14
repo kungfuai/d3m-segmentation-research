@@ -74,20 +74,22 @@ class EvaluationSession:
         batch_sizes = []
         confusion = np.zeros((self.args.num_classes, self.args.num_classes))
         for batch in self.test_dataset:
-            batch_sizes.append(batch[1].shape[0])
+            imgs, labels = batch
+
+            batch_sizes.append(labels.shape[0])
             preds = self.model.predict_on_batch(batch)
             
-            acc_metric.update_state(batch[1], preds)
+            acc_metric.update_state(labels, preds)
             acc = acc_metric.result().numpy()
             acc_metric.reset_states()
-            iou = sm.metrics.iou_score(batch[1], preds).numpy()
+            iou = sm.metrics.iou_score(labels, preds).numpy()
 
             metrics['accuracy'].append(acc)
             metrics['iou_score'].append(iou)
 
-            gt = tf.reshape(tf.math.argmax(batch[1], 3)[:, 1:-1, 1:-1], [-1])
+            gt = tf.reshape(tf.math.argmax(labels, 3)[:, 1:-1, 1:-1], [-1])
             p = tf.reshape(tf.math.argmax(preds, 3)[:, 1:-1, 1:-1], [-1])
-            confusion += confusion_matrix(gt, p)
+            confusion += confusion_matrix(gt, p, labels=np.arange(self.args.num_classes))
 
         metrics = {
             metric: np.average(vals, weights=batch_sizes) 
@@ -97,7 +99,7 @@ class EvaluationSession:
         with open(os.path.join(self.args.log_dir, "metrics.json"), "w") as f:  
             json.dump(metrics, f) 
 
-        confusion /= confusion.sum(axis=0)[np.newaxis,:]
+        confusion /= confusion.sum(axis=1)[:, np.newaxis]
 
         np.savetxt(
             os.path.join(self.args.log_dir, "confusion.csv"), 
