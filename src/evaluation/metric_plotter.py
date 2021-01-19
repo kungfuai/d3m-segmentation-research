@@ -35,7 +35,7 @@ class MetricPlotter:
                 metrics.append(data)
         metrics = pd.concat(metrics).reset_index()
 
-        for metric in ['accuracy', 'iou_score']:
+        for metric in ['accuracy']:#, 'iou_score']:
             plt.clf()
             sns.lineplot(
                 x="dataset size", 
@@ -45,7 +45,7 @@ class MetricPlotter:
             )
             f = os.path.join(self.args.experiment_dir, 'metrics', f'metrics-{metric}.png')
             plt.xscale('log')
-            plt.title(f'Change in segementation {metric} as dataset size increases')
+            plt.title(f'Change in segmentation {metric} as dataset size increases')
             plt.savefig(f)
 
     @staticmethod

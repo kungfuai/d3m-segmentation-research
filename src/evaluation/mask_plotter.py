@@ -28,15 +28,18 @@ class MaskPlotter:
         with open('data/label_indices.json', 'rb') as f:
             label_indices = json.load(f)
         
-        self.class_keys = label_indices['BigEarthNet-19_labels'].keys()
-
-        self.class_colors = [
-            'grey',
-            'tan',
-            'green',
-            'turquoise',
-            'blue'
-        ]
+        if self.args.num_classes > 1:
+            self.class_keys = label_indices['BigEarthNet-19_labels'].keys()
+            self.class_colors = [
+                'grey',
+                'tan',
+                'green',
+                'turquoise',
+                'blue'
+            ]
+        else:
+            self.class_keys = label_indices['BigEarthNet-19_labels_binary'].keys()
+            self.class_colors = ['green', 'tan']
 
     def run(self):
         self.seed_generators()
@@ -93,11 +96,17 @@ class MaskPlotter:
                 dataset_size, condition = MetricPlotter.parse_dir_name(d)
                 one_image_label = (condition=='one_image_label')
 
+                if self.args.num_classes > 1:
+                    activation='softmax'
+                else:
+                    activation='sigmoid'
+
                 model = Unet(
                     input_shape=(128, 128, 10), 
                     classes=self.args.num_classes,
                     weights=os.path.join(d, 'train', 'model.h5'),
-                    one_image_label=one_image_label
+                    one_image_label=one_image_label,
+                    activation=activation
                 )
 
                 if one_image_label:
@@ -124,7 +133,10 @@ class MaskPlotter:
         self.masks = []
         for _, models in self.models.items():
             preds = [model.predict_on_batch(batch) for model in models]
-            preds = [tf.math.argmax(p, 3)[:, 1:-1, 1:-1] for p in preds]
+            if self.args.num_classes > 1:
+                preds = [tf.math.argmax(p, 3)[:, 1:-1, 1:-1] for p in preds]
+            else:
+                preds = [tf.math.round(tf.squeeze(p))[:, 1:-1, 1:-1] for p in preds]
             masks = np.stack(self.labels + preds) 
             self.masks.append(masks)
         self.masks = np.stack(self.masks)

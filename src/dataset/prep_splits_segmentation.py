@@ -24,12 +24,15 @@ def load_image_data(sentinel, corine):
 
     return bands    
 
-def convert_labels(clc_data):
+def convert_labels(clc_data, binary):
 
     with open('data/label_indices.json', 'rb') as f:
         label_indices = json.load(f)
     
-    label_conversion = np.array(label_indices['label_conversion'])
+    if binary:
+        label_conversion = np.array(label_indices['label_conversion_binary'])
+    else:
+        label_conversion = np.array(label_indices['label_conversion'])
     label_conversion = {
         label + 1: i 
         for i, label_set in enumerate(label_conversion)
@@ -158,6 +161,8 @@ if __name__ == "__main__":
                         help = 'folder path containing resulting TFRecord files')
     parser.add_argument('-n', '--train_sizes', dest='train_sizes', type = int, 
                         help = 'size of training sets', nargs = '+')
+    parser.add_argument('-b', '--binary', dest='binary', type = bool, 
+                        help = 'label images for binary classification', default = True)
 
     args = parser.parse_args()
 
@@ -167,7 +172,7 @@ if __name__ == "__main__":
     #pickle.dump(bands, open("bands.pkl", "wb"))
     bands = pickle.load(open("bands.pkl", "rb" ))
 
-    bands['clc_data'] = convert_labels(bands['clc_data'])
+    bands['clc_data'] = convert_labels(bands['clc_data'], args.binary)
 
     tiles = split(bands, args.tile_size) 
 

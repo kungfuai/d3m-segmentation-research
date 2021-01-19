@@ -14,3 +14,9 @@ class ProxyCorrelationPlotterArgParser(ArgumentParser):
             help='directory containing subfolders pertaining to different experimental conditions',
             nargs='+',
         )
+        self.add_argument(
+            "--num_classes",
+            type=int,
+            default=5,
+            help="Number of classes in segmentation model",
+        )

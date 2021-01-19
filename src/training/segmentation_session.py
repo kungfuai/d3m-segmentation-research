@@ -75,25 +75,41 @@ class SegmentationSession:
             self.val_dataset = None
 
     def create_model(self):
+        if self.args.num_classes > 1:
+            activation='softmax'
+        else:
+            activation='sigmoid'
         self.model = Unet(
             input_shape=(128, 128, 10), 
             classes=self.args.num_classes,
             encoder_weights=self.args.encoder_weights,
             encoder_freeze=True,
             one_image_label=self.args.one_image_label,
+            activation=activation
         )
 
     def compile_model(self):
         if self.args.loss_function == 'focal':
-            loss = sm.losses.categorical_focal_loss
-            self.class_weights = None
-        elif self.args.loss_function == 'xent':
-            if self.args.one_image_label:
-                loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-                metric = tf.keras.metrics.SparseCategoricalAccuracy()
-            else:
-                loss = sm.losses.CategoricalCELoss(class_weights=self.class_weights)
+            if self.args.num_classes > 1:
+                loss = sm.losses.categorical_focal_loss 
                 metric = 'categorical_accuracy'
+            else:
+                loss = sm.losses.binary_focal_loss
+                metric = 'binary_accuracy'
+            self.class_weights = None
+
+        elif self.args.loss_function == 'xent':
+            if self.args.num_classes > 1:
+                if self.args.one_image_label:
+                    loss = tf.keras.losses.SparseCategoricalCrossentropy()
+                    metric = tf.keras.metrics.SparseCategoricalAccuracy()
+                else:
+                    loss = sm.losses.CategoricalCELoss(class_weights=self.class_weights)
+                    metric = 'categorical_accuracy'
+                    self.class_weights = None
+            else:
+                loss = sm.losses.binary_crossentropy
+                metric = 'binary_accuracy'
                 self.class_weights = None
         else:
             raise ValueError("'loss_function' must be one of 'focal' or 'xent'")
@@ -108,6 +124,7 @@ class SegmentationSession:
             loss=loss,
             loss_weights=loss_weights,
             metrics=[metric],
+            #weighted_metrics=[metric],
         )
 
     def train(self, epochs, initial_epoch=0):

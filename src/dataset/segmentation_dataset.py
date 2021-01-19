@@ -28,7 +28,7 @@ class SegmentationDataset:
             )
 
         dataset = dataset.map(
-            lambda x: self.parse_function(x, nb_class), 
+            lambda x: self.parse_function(x), 
             num_parallel_calls=10
         )
 
@@ -41,10 +41,10 @@ class SegmentationDataset:
         dataset = dataset.batch(batch_size, drop_remainder=False)
         self.dataset = dataset.prefetch(10)
 
-        if normalize:
+        if normalize and nb_class > 1:
             self.class_weights = self.class_weights(nb_class)
 
-    def parse_function(self, example_proto, nb_class):
+    def parse_function(self, example_proto):
 
         parsed_features = tf.io.parse_single_example(
                 example_proto, 
@@ -121,20 +121,19 @@ class SegmentationDataset:
             if self.one_pixel_mask:
                 pixel = img_dict['random_pixel']
                 value = tf.gather_nd(img_dict['Corine_labels'], pixel)
-                labels = tf.zeros((126, 126), dtype=tf.int64) - 1
+                if nb_class > 1:
+                    labels = tf.zeros((126, 126), dtype=tf.int64) - 1
+                else:
+                    labels = tf.zeros((126, 126), dtype=tf.int64)
                 labels = tf.tensor_scatter_nd_update(labels, pixel, value)
                 mask = tf.tensor_scatter_nd_update(
                     tf.zeros((126, 126), dtype=tf.int64),
                     pixel,
                     tf.ones((1,), dtype=tf.int64)
                 )
-                mask = tf.pad(
-                    mask, 
-                    tf.constant([[1,1], [1,1]]),
-                    "CONSTANT",
-                )
             else:
                 labels = img_dict['Corine_labels']
+                mask = tf.ones((126,126), dtype=tf.int64)
                 
             labels = tf.pad(
                 labels, 
@@ -142,15 +141,27 @@ class SegmentationDataset:
                 "CONSTANT",
                 constant_values=-1
             )
+            mask = tf.pad(
+                mask, 
+                tf.constant([[1,1], [1,1]]),
+                "CONSTANT",
+            )
 
-        one_hots = tf.one_hot(labels, nb_class)
+        if nb_class > 1:
+            one_hots = tf.one_hot(labels, nb_class)
 
-        if self.one_pixel_mask:
-            return img, one_hots, mask
-        elif self.one_image_label and self.loss_function == 'xent':
-            return img, labels
+            if self.one_pixel_mask:
+                return img, one_hots, mask
+            elif self.one_image_label and self.loss_function == 'xent':
+                return img, labels
+            else:
+                return img, one_hots
+
         else:
-            return img, one_hots
+            if self.one_image_label:
+                return img, labels
+            else:
+                return img, labels, mask
 
     def class_weights(self, nb_class):
         

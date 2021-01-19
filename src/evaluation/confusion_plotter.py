@@ -23,13 +23,16 @@ class ConfusionPlotter:
             exist_ok=True
         )
 
-        self.class_keys = [
-            'Artifical',
-            'Agricultural',
-            'Forest',
-            'Wetlands',
-            'Water Bodies'
-        ]
+        if self.args.num_classes > 1:
+            self.class_keys = [
+                'Artificial',
+                'Agricultural',
+                'Forest',
+                'Wetlands',
+                'Water Bodies'
+            ]
+        else:
+            self.class_keys = ['Not Agricultural', 'Agricultural']
 
     def plot(self): 
 

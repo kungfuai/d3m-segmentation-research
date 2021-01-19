@@ -46,11 +46,16 @@ class EvaluationSession:
         ).dataset
 
     def create_model(self):
+        if self.args.num_classes > 1:
+            activation='softmax'
+        else:
+            activation='sigmoid'
         self.model = Unet(
             input_shape=(128, 128, 10), 
             classes=self.args.num_classes,
             weights=self.args.model_weights,
             one_image_label=self.args.one_image_label,
+            activation=activation
         )
 
         if self.args.one_image_label:
@@ -66,30 +71,41 @@ class EvaluationSession:
 
         metrics = {
             'accuracy': [],
-            'iou_score': []
+            #'iou_score': [],
         }
 
-        acc_metric = tf.keras.metrics.CategoricalAccuracy()
+        if self.args.num_classes > 1:
+            acc_metric = tf.keras.metrics.CategoricalAccuracy()
+            conf_c = self.args.num_classes
+        else:
+            acc_metric = tf.keras.metrics.BinaryAccuracy()
+            conf_c = 2
 
         batch_sizes = []
-        confusion = np.zeros((self.args.num_classes, self.args.num_classes))
+        confusion = np.zeros((conf_c, conf_c))
         for batch in self.test_dataset:
-            imgs, labels = batch
-
-            batch_sizes.append(labels.shape[0])
+            batch_sizes.append(batch[1].shape[0])
             preds = self.model.predict_on_batch(batch)
             
-            acc_metric.update_state(labels, preds)
+            acc_metric.update_state(batch[1], preds)
             acc = acc_metric.result().numpy()
             acc_metric.reset_states()
-            iou = sm.metrics.iou_score(labels, preds).numpy()
+            #iou = sm.metrics.iou_score(batch[1], preds).numpy()
 
             metrics['accuracy'].append(acc)
-            metrics['iou_score'].append(iou)
+            #metrics['iou_score'].append(iou)
 
-            gt = tf.reshape(tf.math.argmax(labels, 3)[:, 1:-1, 1:-1], [-1])
-            p = tf.reshape(tf.math.argmax(preds, 3)[:, 1:-1, 1:-1], [-1])
-            confusion += confusion_matrix(gt, p, labels=np.arange(self.args.num_classes))
+            if self.args.num_classes > 1:
+                gt = tf.math.argmax(batch[1], 3)
+                p = tf.math.argmax(preds, 3)
+            else:
+                gt = batch[1]
+                p = tf.math.round(preds)
+            
+            gt = tf.reshape(gt[:, 1:-1, 1:-1], [-1])
+            p = tf.reshape(p[:, 1:-1, 1:-1], [-1])
+
+            confusion += confusion_matrix(gt, p, labels=np.arange(conf_c))
 
         metrics = {
             metric: np.average(vals, weights=batch_sizes) 

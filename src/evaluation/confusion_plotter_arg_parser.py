@@ -13,3 +13,9 @@ class ConfusionPlotterArgParser(ArgumentParser):
             type=str,
             help='directory containing subfolders pertaining to different experimental conditions' 
         )
+        self.add_argument(
+            "--num_classes",
+            type=int,
+            default=5,
+            help="Number of classes in segmentation model",
+        )
