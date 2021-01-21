@@ -44,7 +44,7 @@ class ProxyCorrelationPlotter:
                     proxy_data = pd.read_csv(proxy_metric_file)
                     
                     if self.args.num_classes == 1:
-                        proxy_acc = proxy_data['val_binary_accuracy'].values[-1]
+                        proxy_acc = proxy_data['val_weighted_binary_accuracy'].values[-1]
                     elif condition == 'one_image_label':
                         proxy_acc = proxy_data['val_sparse_categorical_accuracy'].values[-1]
                     elif condition == 'one_pixel_mask':

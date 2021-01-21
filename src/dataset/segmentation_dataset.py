@@ -159,9 +159,9 @@ class SegmentationDataset:
 
         else:
             if self.one_image_label:
-                return img, labels
+                return img, tf.expand_dims(labels, axis=-1)
             else:
-                return img, labels, mask
+                return img, tf.expand_dims(labels, axis=-1), mask
 
     def class_weights(self, nb_class):
         

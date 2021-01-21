@@ -108,7 +108,7 @@ class SegmentationSession:
                     metric = 'categorical_accuracy'
                     self.class_weights = None
             else:
-                loss = sm.losses.binary_crossentropy
+                loss = tf.keras.losses.BinaryCrossentropy()
                 metric = 'binary_accuracy'
                 self.class_weights = None
         else:
@@ -124,7 +124,7 @@ class SegmentationSession:
             loss=loss,
             loss_weights=loss_weights,
             metrics=[metric],
-            #weighted_metrics=[metric],
+            weighted_metrics=[metric],
         )
 
     def train(self, epochs, initial_epoch=0):

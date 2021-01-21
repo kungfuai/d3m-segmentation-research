@@ -113,6 +113,9 @@ class MaskPlotter:
                     features = model.get_layer('decoder_stage4b_relu').output
                     output = model.get_layer('final_fc')(features) 
 
+                    if self.args.num_classes == 1:
+                        output = tf.keras.activations.sigmoid(output)
+
                     model = tf.keras.Model(
                         inputs=model.input,
                         outputs=output
@@ -193,8 +196,9 @@ class MaskPlotter:
                             plt.imshow(
                                 masks[col-1][row-1], 
                                 vmin=0, 
-                                vmax=4,
+                                vmax=max(1, self.args.num_classes - 1),
                                 cmap=ListedColormap(self.class_colors)
+                                #cmap='Oranges'
                             )
 
             plt.savefig(
