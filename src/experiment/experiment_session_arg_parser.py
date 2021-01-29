@@ -86,7 +86,7 @@ class ExperimentSessionArgParser(ArgumentParser):
         self.add_argument(
             "--encoder_weights",
             type=str,
-            default='logs/',
+            default=None,
             help="Parameters of trained classification model",
         )
         self.add_argument(

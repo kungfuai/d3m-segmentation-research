@@ -83,7 +83,7 @@ class SegmentationSession:
             input_shape=(128, 128, 10), 
             classes=self.args.num_classes,
             encoder_weights=self.args.encoder_weights,
-            encoder_freeze=True,
+            encoder_freeze=self.args.encoder_weights != None,
             one_image_label=self.args.one_image_label,
             activation=activation
         )

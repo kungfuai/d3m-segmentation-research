@@ -31,12 +31,12 @@ class MaskPlotterArgParser(ArgumentParser):
         self.add_argument(
             "--test_records",
             type=str,
-            default='data/prepped/segmentation-test.tfrecord',
+            default='data/prepped-binary/segmentation-test.tfrecord',
             help="TF Records file for test dataset",
         )
         self.add_argument(
             "--num_classes",
             type=int,
-            default=5,
+            default=1,
             help="Number of classes in segmentation model",
         )

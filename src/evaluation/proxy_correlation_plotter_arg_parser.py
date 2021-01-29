@@ -17,6 +17,6 @@ class ProxyCorrelationPlotterArgParser(ArgumentParser):
         self.add_argument(
             "--num_classes",
             type=int,
-            default=5,
+            default=1,
             help="Number of classes in segmentation model",
         )

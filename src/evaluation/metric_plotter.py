@@ -32,6 +32,7 @@ class MetricPlotter:
                 data = pd.DataFrame([pd.read_json(metric_file, typ='series')])
                 data['dataset size'] = int(dataset_size)
                 data['condition'] = condition
+                #data['training'] = training
                 metrics.append(data)
         metrics = pd.concat(metrics).reset_index()
 
@@ -41,7 +42,8 @@ class MetricPlotter:
                 x="dataset size", 
                 y=metric,
                 hue="condition",
-                data=metrics
+                data=metrics,
+                #style="training"
             )
             f = os.path.join(self.args.experiment_dir, 'metrics', f'metrics-{metric}.png')
             plt.xscale('log')
@@ -53,7 +55,10 @@ class MetricPlotter:
         dir_str = directory.split('/')[-1]
         dataset_size, condition = dir_str.split('-')
         return dataset_size, condition
-
+        # if len(tags) == 2:
+        #     return tags[0], tags[1], 'random'
+        # else:
+        #     return tags[0], tags[1], tags[2]
 
 if __name__ == "__main__":
     args = MetricPlotterArgParser().parse_args()

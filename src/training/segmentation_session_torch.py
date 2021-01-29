@@ -104,7 +104,7 @@ class SegmentationSessionTorch:
 
         self.model = Unet(
             encoder_weights=self.args.encoder_weights,
-            encoder_freeze=True,
+            encoder_freeze=self.args.encoder_weights != None,
             one_image_label=self.args.one_image_label,
             device=self.device
         ).to(self.device)
