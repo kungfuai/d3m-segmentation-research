@@ -15,20 +15,23 @@ def identity_block(input_tensor, kernel_size, filters, stage, block):
 
     x = layers.Conv2D(filters1, (1, 1),
                       kernel_initializer='he_normal',
-                      name=conv_name_base + '2a')(input_tensor)
+                      name=conv_name_base + '2a',
+                      use_bias=True)(input_tensor)
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
     x = layers.Activation('relu')(x)
 
     x = layers.Conv2D(filters2, kernel_size,
                       padding='same',
                       kernel_initializer='he_normal',
-                      name=conv_name_base + '2b')(x)
+                      name=conv_name_base + '2b',
+                      use_bias=True)(x)
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2b')(x)
     x = layers.Activation('relu')(x)
 
     x = layers.Conv2D(filters3, (1, 1),
                       kernel_initializer='he_normal',
-                      name=conv_name_base + '2c')(x)
+                      name=conv_name_base + '2c',
+                      use_bias=True)(x)
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
 
     x = layers.add([x, input_tensor])
@@ -54,24 +57,28 @@ def conv_block(input_tensor,
 
     x = layers.Conv2D(filters1, (1, 1), strides=strides,
                       kernel_initializer='he_normal',
-                      name=conv_name_base + '2a')(input_tensor)
+                      name=conv_name_base + '2a',
+                      use_bias=True)(input_tensor)
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
     x = layers.Activation('relu')(x)
 
     x = layers.Conv2D(filters2, kernel_size, padding='same',
                       kernel_initializer='he_normal',
-                      name=conv_name_base + '2b')(x)
+                      name=conv_name_base + '2b',
+                      use_bias=True)(x)
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2b')(x)
     x = layers.Activation('relu')(x)
 
     x = layers.Conv2D(filters3, (1, 1),
                       kernel_initializer='he_normal',
-                      name=conv_name_base + '2c')(x)
+                      name=conv_name_base + '2c',
+                      use_bias=True)(x)
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
 
     shortcut = layers.Conv2D(filters3, (1, 1), strides=strides,
                              kernel_initializer='he_normal',
-                             name=conv_name_base + '1')(input_tensor)
+                             name=conv_name_base + '1',
+                             use_bias=True)(input_tensor)
     shortcut = layers.BatchNormalization(
         axis=bn_axis, name=bn_name_base + '1')(shortcut)
 
@@ -110,7 +117,8 @@ def ResNet50(include_top=True,
                       strides=(2, 2),
                       padding='valid',
                       kernel_initializer='he_normal',
-                      name='conv1')(x)
+                      name='conv1',
+                      use_bias=True)(x)
     x = layers.BatchNormalization(axis=bn_axis, name='bn_conv1')(x)
     x = layers.Activation('relu', name='activation1')(x)
     x = layers.ZeroPadding2D(padding=(1, 1), name='pool1_pad')(x)

@@ -131,7 +131,8 @@ class BigEarthDataset:
         img = tf.concat(
             [
                 bands_10m, 
-                tf.image.resize(bands_20m, [120, 120], method='bicubic')
+                tf.image.resize(bands_20m, [120, 120], method='bicubic'),
+                #tf.image.resize(bands_60m, [120, 120], method='bicubic'),
             ], 
             axis=2
         )

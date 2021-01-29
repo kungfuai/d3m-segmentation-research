@@ -82,7 +82,7 @@ class SegmentationDataset:
             'B12': tf.reshape(tf.cast(parsed_features['B12'], tf.float32), [63, 63]),
             'Corine_labels': tf.reshape(parsed_features['Corine_labels'], [126, 126]),
             'random_pixel': tf.reshape(parsed_features['random_pixel'], [1,2]),
-            'class_label': parsed_features['class_label']
+            'class_label': tf.cast(parsed_features['class_label'], tf.float32)
         }
 
     def normalize(self, img_dict, nb_class):
@@ -104,7 +104,8 @@ class SegmentationDataset:
         img = tf.concat(
             [
                 bands_10m, 
-                tf.image.resize(bands_20m, [126, 126], method='bicubic')
+                tf.image.resize(bands_20m, [126, 126], method='bicubic'),
+                #tf.image.resize(bands_60m, [126, 126], method='bicubic')
             ], 
             axis=2
         )

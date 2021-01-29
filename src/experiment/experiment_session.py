@@ -3,8 +3,10 @@ import logging
 
 from src.experiment.experiment_session_arg_parser import ExperimentSessionArgParser
 from src.training.segmentation_session import SegmentationSession
+from src.training.segmentation_session_torch import SegmentationSessionTorch
 from src.training.segmentation_session_arg_parser import SegmentationSessionArgParser
 from src.evaluation.evaluation_session import EvaluationSession
+from src.evaluation.evaluation_session_torch import EvaluationSessionTorch
 from src.evaluation.evaluation_session_arg_parser import EvaluationSessionArgParser
 
 LOGGER = logging.getLogger(__name__)
@@ -30,10 +32,18 @@ class ExperimentSession:
 
                 n = i * len(self.args.conditions) + j + 1
                 print(f'\nRunning training session {n} -- TRAIN SIZE = {train_size}, CONDITION = {condition}\n')
-                training_session = SegmentationSession(train_args).run()
+                if self.args.framework == 'tensorflow':
+                    training_session = SegmentationSession(train_args).run()
+                elif self.args.framework == 'torch':
+                    training_session = SegmentationSessionTorch(train_args).run()
+                else:
+                    raise ValueError("framework must be either 'tensorflow' or 'torch'")
 
                 print(f'\nRunning evaluation session {n} -- TRAIN SIZE = {train_size}, CONDITION = {condition}\n')
-                evaluation_session = EvaluationSession(eval_args).run()
+                if self.args.framework == 'tensorflow':
+                    evaluation_session = EvaluationSession(eval_args).run()
+                else:
+                    evaluation_session = EvaluationSessionTorch(eval_args).run()
 
     def set_train_args(self, train_size, condition):
 
@@ -82,11 +92,16 @@ class ExperimentSession:
         setattr(eval_args, "num_classes", self.args.num_classes)
         setattr(eval_args, "batch_size", self.args.batch_size)
         
+        if self.args.framework == 'tensorflow':
+            model_file = 'model.h5'
+        else:
+            model_file = 'model.pth'
+
         model_weights = os.path.join(
             self.args.log_dir, 
             f'{train_size}-{condition}',
             'train',
-            'model.h5'
+            model_file
         )
         setattr(eval_args, "model_weights", model_weights)
 

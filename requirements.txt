@@ -17,3 +17,7 @@ numpy==1.18.2
 segmentation-models==1.0.1
 seaborn==0.11.1
 scikit-learn==0.24.0
+torch==1.4.0
+torchvision==0.5.0
+tfrecord==1.11
+segmentation-models-pytorch==0.1.3

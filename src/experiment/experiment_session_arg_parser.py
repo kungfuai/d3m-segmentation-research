@@ -95,3 +95,9 @@ class ExperimentSessionArgParser(ArgumentParser):
             default='focal',
             help="Loss function to use for segmentation training - options are 'focal' and 'xent'",
         )
+        self.add_argument(
+            "--framework",
+            type=str,
+            default='tensorflow',
+            help="Whether to run experiments with tensorflow (or pytorch) framework",
+        )

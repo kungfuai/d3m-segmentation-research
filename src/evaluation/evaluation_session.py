@@ -61,6 +61,7 @@ class EvaluationSession:
         if self.args.one_image_label:
             features = self.model.get_layer('decoder_stage4b_relu').output
             output = self.model.get_layer('final_fc')(features) 
+            output = tf.keras.layers.Activation(activation)(output)
 
             self.model = tf.keras.Model(
                 inputs=self.model.input,
@@ -86,7 +87,7 @@ class EvaluationSession:
         for batch in self.test_dataset:
             batch_sizes.append(batch[1].shape[0])
             preds = self.model.predict_on_batch(batch)
-            
+                        
             acc_metric.update_state(batch[1], preds)
             acc = acc_metric.result().numpy()
             acc_metric.reset_states()

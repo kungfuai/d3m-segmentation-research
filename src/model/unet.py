@@ -180,8 +180,6 @@ def Unet(
         **kwargs
 ):
 
-    decoder_block = DecoderUpsamplingX2Block
-
     encoder_features = ('activation4f', 'activation3d', 'activation2c', 'activation1')
     backbone = ResNet50(
         input_shape=input_shape, 
@@ -191,7 +189,7 @@ def Unet(
 
     model = build_unet(
         backbone=backbone,
-        decoder_block=decoder_block,
+        decoder_block=DecoderUpsamplingX2Block,
         skip_connection_layers=encoder_features,
         decoder_filters=decoder_filters,
         classes=classes,
