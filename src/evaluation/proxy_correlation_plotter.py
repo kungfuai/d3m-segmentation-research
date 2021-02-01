@@ -43,12 +43,16 @@ class ProxyCorrelationPlotter:
                     proxy_metric_file = os.path.join(d, 'train', 'metrics.csv')
                     proxy_data = pd.read_csv(proxy_metric_file)
                     
-                    if self.args.num_classes == 1:
-                        proxy_acc = proxy_data['val_weighted_binary_accuracy'].values[-1]
+                    if self.args.framework == 'torch':
+                        key = 'binary_accuracy'
+                    elif self.args.num_classes == 1:
+                        key = 'val_weighted_binary_accuracy'
                     elif condition == 'one_image_label':
-                        proxy_acc = proxy_data['val_sparse_categorical_accuracy'].values[-1]
+                        key = 'val_sparse_categorical_accuracy'
                     elif condition == 'one_pixel_mask':
-                        proxy_acc = proxy_data['val_weighted_categorical_accuracy'].values[-1]
+                        key == 'val_weighted_categorical_accuracy'
+                    
+                    proxy_acc = proxy_data[key].values[-1]
                     #proxy_iou = proxy_data['val_iou_score'].values[-1]
 
                     data['proxy task accuracy'] = proxy_acc

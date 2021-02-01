@@ -20,3 +20,9 @@ class ProxyCorrelationPlotterArgParser(ArgumentParser):
             default=1,
             help="Number of classes in segmentation model",
         )
+        self.add_argument(
+            "--framework",
+            type=str,
+            default='tensorflow',
+            help="Whether to run experiments with tensorflow (or pytorch) framework",
+        )
