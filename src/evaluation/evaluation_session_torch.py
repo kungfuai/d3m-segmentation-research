@@ -77,9 +77,9 @@ class EvaluationSessionTorch:
         confusion = np.zeros((2,2))
         for batch in self.test_loader:
             inputs = batch[0].to(self.device)
-            labels = batch[1].squeeze()
+            labels = batch[1].squeeze().numpy()
             preds = self.model.predict(inputs)
-            preds = preds.detach().numpy().squeeze()
+            preds = np.round(preds.detach().cpu().numpy().squeeze())
             batch_sizes.append(labels.shape[0])
 
             acc = np.sum((preds == labels)) / labels.shape[0]
@@ -87,7 +87,7 @@ class EvaluationSessionTorch:
             accs.append(acc)
 
             gt = labels[:, 1:-1, 1:-1].flatten()
-            p = np.round(preds[:, 1:-1, 1:-1]).flatten()
+            p = preds[:, 1:-1, 1:-1].flatten()
 
             confusion += confusion_matrix(gt, p, labels=np.arange(2))
 

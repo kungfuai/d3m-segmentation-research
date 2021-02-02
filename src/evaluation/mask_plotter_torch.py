@@ -117,11 +117,12 @@ class MaskPlotterTorch(MaskPlotter):
         
         for _ in range(self.args.batch_no):
             batch = next(self.test_dataset)
+            imgs = batch[0].to(self.device)
 
         self.masks = []
         for _, models in self.models.items():
-            preds = [model.predict(batch[0]) for model in models]
-            preds = [p.detach().numpy().squeeze() for p in preds]
+            preds = [model.predict(imgs) for model in models]
+            preds = [p.detach().cpu().numpy().squeeze() for p in preds]
             preds = [np.round(p[:, 1:-1, 1:-1]) for p in preds]
             masks = np.stack(self.labels + preds) 
             self.masks.append(masks)

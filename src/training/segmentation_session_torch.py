@@ -81,6 +81,19 @@ class SegmentationSessionTorch:
             batch_size=self.args.batch_size,
         )
 
+        # batch_sizes = []
+        # pos_fracs = []
+        # for batch in self.train_loader:
+        #     batch_sizes.append(batch[1].shape[0])
+        #     if self.args.one_image_label or self.args.one_pixel_mask:
+        #         pos_frac = torch.sum(batch[1]) / batch[1].shape[0]
+        #     else:
+        #         pos_frac = torch.sum(batch[1]) / torch.flatten(batch[1]).shape[0]
+        #     pos_frac = pos_frac.detach().cpu().numpy()
+        #     pos_fracs.append(pos_frac)
+        # pos_weight = 1 / np.average(pos_fracs, weights=batch_sizes)
+        # self.pos_weight = torch.tensor(pos_weight)
+
         if self.args.val_records:
             val_dataset = TFRecordDataset(
                 self.args.val_records,
@@ -111,6 +124,10 @@ class SegmentationSessionTorch:
 
     def compile_model(self):
         self.loss = torch.nn.BCELoss(reduction='none')
+        # self.loss = torch.nn.BCEWithLogitsLoss(
+        #     reduction='none',
+        #     pos_weight=self.pos_weight
+        # )
         self.optimizer = torch.optim.Adam(
             self.model.parameters(),
             eps=1e-7

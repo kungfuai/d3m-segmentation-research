@@ -44,7 +44,7 @@ class ProxyCorrelationPlotter:
                     proxy_data = pd.read_csv(proxy_metric_file)
                     
                     if self.args.framework == 'torch':
-                        key = 'binary_accuracy'
+                        key = 'val_binary_accuracy'
                     elif self.args.num_classes == 1:
                         key = 'val_weighted_binary_accuracy'
                     elif condition == 'one_image_label':
