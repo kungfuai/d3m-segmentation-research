@@ -11,6 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 from src.dataset.segmentation_dataset_torch import preprocess
 from src.model.unet_torch import Unet 
 from src.training.segmentation_session_arg_parser import SegmentationSessionArgParser
+from src.training.losses_torch import BinaryFocalLoss
 
 LOGGER = logging.getLogger(__name__)
 
@@ -123,11 +124,17 @@ class SegmentationSessionTorch:
         ).to(self.device)
 
     def compile_model(self):
-        self.loss = torch.nn.BCELoss(reduction='none')
-        # self.loss = torch.nn.BCEWithLogitsLoss(
-        #     reduction='none',
-        #     pos_weight=self.pos_weight
-        # )
+        if self.args.loss_function == 'xent':
+            self.loss = torch.nn.BCELoss(reduction='none')
+            # self.loss = torch.nn.BCEWithLogitsLoss(
+            #     reduction='none',
+            #     pos_weight=self.pos_weight
+            # )
+        elif self.args.loss_function == 'focal':
+            self.loss = BinaryFocalLoss()
+        else:
+            raise ValueError("'loss_function' must be one of 'focal' or 'xent'")
+
         self.optimizer = torch.optim.Adam(
             self.model.parameters(),
             eps=1e-7
