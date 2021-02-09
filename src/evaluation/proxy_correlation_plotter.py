@@ -31,7 +31,11 @@ class ProxyCorrelationPlotter:
         for e in self.args.experiment_dirs:
             for f in os.listdir(e):
                 d = os.path.join(e, f)
-                if os.path.isdir(d) and d.split('/')[-1] not in ['metrics', 'confusion-matrices']:
+                if os.path.isdir(d) and d.split('/')[-1] not in [
+                    'metrics', 
+                    'confusion-matrices',
+                    'calibration-plots'
+                ]:                    
                     dataset_size, condition = MetricPlotter.parse_dir_name(d)
                     real_metric_file = os.path.join(d, 'eval', 'metrics.json')
                     data = pd.DataFrame([pd.read_json(real_metric_file, typ='series')])

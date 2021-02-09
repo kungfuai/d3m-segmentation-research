@@ -39,7 +39,11 @@ class ConfusionPlotter:
         metrics = []
         for f in os.listdir(self.args.experiment_dir):
             d = os.path.join(self.args.experiment_dir, f)
-            if os.path.isdir(d) and d.split('/')[-1] not in ['metrics', 'confusion-matrices']:
+            if os.path.isdir(d) and d.split('/')[-1] not in [
+                'metrics', 
+                'confusion-matrices',
+                'calibration-plots'
+            ]:
                 dataset_size, condition = MetricPlotter.parse_dir_name(d)
                 confusion_file = os.path.join(d, 'eval', 'confusion.csv')
                 data = pd.read_csv(

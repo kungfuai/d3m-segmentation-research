@@ -4,13 +4,17 @@ import logging
 import json
 
 import numpy as np
+import pandas as pd
 import torch
 from tfrecord.torch.dataset import TFRecordDataset
 from sklearn.metrics import confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt 
 
 from src.evaluation.evaluation_session_arg_parser import EvaluationSessionArgParser
 from src.dataset.segmentation_dataset_torch import preprocess
 from src.model.unet_torch import Unet, SegmentationHeadImageLabelEval
+from src.evaluation.metric_plotter import MetricPlotter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +41,12 @@ class EvaluationSessionTorch:
 
     def create_directories(self):
         os.makedirs(self.args.log_dir, exist_ok=True)
+        
+        self.calibration_dir = os.path.join(
+            '/'.join(self.args.log_dir.split('/')[:-2]),
+            'calibration-plots'
+        )
+        os.makedirs(self.calibration_dir, exist_ok=True)
 
     def load_data(self):
 
@@ -74,24 +84,35 @@ class EvaluationSessionTorch:
 
         accs = []
         batch_sizes = []
+        all_labels = []
+        all_preds = []
         confusion = np.zeros((2,2))
         for batch in self.test_loader:
             inputs = batch[0].to(self.device)
             labels = batch[1].squeeze().numpy()
             preds = self.model.predict(inputs)
-            preds = np.round(preds.detach().cpu().numpy().squeeze())
+            preds = preds.detach().cpu().numpy().squeeze()
             batch_sizes.append(labels.shape[0])
 
-            acc = np.sum((preds == labels)) / labels.shape[0]
+            acc = np.sum((np.round(preds) == labels)) / labels.shape[0]
             acc /= (labels.shape[2] ** 2)
             accs.append(acc)
 
             gt = labels[:, 1:-1, 1:-1].flatten()
             p = preds[:, 1:-1, 1:-1].flatten()
 
-            confusion += confusion_matrix(gt, p, labels=np.arange(2))
+            all_labels.append(gt)
+            all_preds.append(p)
 
-        metrics = {"accuracy": np.average(accs, weights=batch_sizes)}
+            confusion += confusion_matrix(gt, np.round(p), labels=np.arange(2))
+
+        max_cal_e, exp_cal_e = self.calibration(all_labels, all_preds)
+
+        metrics = {
+            "accuracy": np.average(accs, weights=batch_sizes),
+            "max_calibration_error": max_cal_e,
+            "expected_calibration_error": exp_cal_e
+        }
 
         with open(os.path.join(self.args.log_dir, "metrics.json"), "w") as f:  
             json.dump(metrics, f) 
@@ -104,6 +125,84 @@ class EvaluationSessionTorch:
             delimiter=","
         )
 
+    def calibration(self, all_labels, all_preds):
+        
+        preds = np.concatenate(all_preds)
+        labels = np.concatenate(all_labels)
+
+        bin_width = 1 / self.args.num_bins
+        bins = np.arange(0, 1, bin_width)
+        bin_inds = np.digitize(preds, bins)
+        
+        bin_preds = [
+            preds[np.where(bin_inds == i)[0]]
+            for i in range(1, self.args.num_bins + 1)
+        ]
+        bin_labels = [
+            labels[np.where(bin_inds == i)[0]]
+            for i in range(1, self.args.num_bins + 1)
+        ]
+        bin_sizes = [len(preds) for preds in bin_preds]
+
+        bin_confs = [np.mean(preds) for preds in bin_preds]
+        bin_freqs = [
+            labels.sum() / size
+            for labels, size in zip(bin_labels, bin_sizes)
+        ]
+        diffs = [
+            abs(freq - conf)
+            for freq, conf in zip(bin_freqs, bin_confs)
+        ]
+        weighted_diffs = [
+            w / np.sum(bin_sizes) * val
+            for w, val in zip(bin_sizes, diffs)
+        ]
+
+        print(bin_sizes)
+        print(bin_confs)
+        print(bin_freqs)
+        max_cal_e = np.nanmax(diffs)
+        exp_cal_e = np.nansum(weighted_diffs)
+
+        self.plot_calibration(bins, bin_confs, bin_freqs)
+
+        return max_cal_e, exp_cal_e
+
+    def plot_calibration(self, bins, confs, freqs):
+
+        data_obs = pd.DataFrame({
+            'confidence': confs,
+            'observed frequency': freqs,
+            'calibration': 'model'
+        })
+        data_perfect = pd.DataFrame({
+            'confidence': bins,
+            'observed frequency': bins,
+            'calibration': 'perfect'
+        })
+        data = pd.concat([data_obs, data_perfect])
+        data = data.append(
+            {
+                'confidence': 1,
+                'observed frequency': 1,
+                'calibration': 'perfect'
+            },
+            ignore_index=True
+        )
+
+        plt.clf()
+        sns.lineplot(
+            x="confidence", 
+            y="observed frequency",
+            hue='calibration',
+            data=data
+        )
+        dir_str = self.args.log_dir.split('/')[-2]
+        ds_size, condition = dir_str.split('-')
+        plt.title(f'Model Calibration: {condition} - {ds_size} images')
+        plt.savefig(os.path.join(
+            self.calibration_dir, f'calibration-plot-{ds_size}-{condition}.png'
+        ))
 
 if __name__ == "__main__":
     args = EvaluationSessionArgParser().parse_args()

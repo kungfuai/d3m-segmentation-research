@@ -111,6 +111,8 @@ class ExperimentSession:
 
         if condition == 'one_image_label':
             setattr(eval_args, "one_image_label", True)
+
+        setattr(eval_args, "num_bins", self.args.num_bins)
         
         return eval_args
 

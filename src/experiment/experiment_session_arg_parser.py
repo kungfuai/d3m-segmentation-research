@@ -101,3 +101,9 @@ class ExperimentSessionArgParser(ArgumentParser):
             default='tensorflow',
             help="Whether to run experiments with tensorflow (or pytorch) framework",
         )
+        self.add_argument(
+            "--num_bins",
+            type=int,
+            default=10,
+            help="Number of bins to use in approximations of calibration errors",
+        )

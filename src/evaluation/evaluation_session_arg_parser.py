@@ -46,15 +46,15 @@ class EvaluationSessionArgParser(ArgumentParser):
             help="Parameters of trained segmentation model",
         )
         self.add_argument(
-            "--one_pixel_mask",
-            type=bool,
-            default=False,
-            help="If True - calculate metrics with pixel mask",
-        )
-        self.add_argument(
             "--one_image_label",
             type=bool,
             default=False,
             help="If True - create model architecture with classification head",
+        )
+        self.add_argument(
+            "--num_bins",
+            type=int,
+            default=10,
+            help="Number of bins to use in approximations of calibration errors",
         )
 

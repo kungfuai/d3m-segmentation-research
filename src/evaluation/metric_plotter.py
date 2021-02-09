@@ -26,7 +26,11 @@ class MetricPlotter:
         metrics = []
         for f in os.listdir(self.args.experiment_dir):
             d = os.path.join(self.args.experiment_dir, f)
-            if os.path.isdir(d) and d.split('/')[-1] not in ['metrics', 'confusion-matrices']:
+            if os.path.isdir(d) and d.split('/')[-1] not in [
+                'metrics', 
+                'confusion-matrices',
+                'calibration-plots'
+            ]:                
                 dataset_size, condition = self.parse_dir_name(d)
                 metric_file = os.path.join(d, 'eval', 'metrics.json')
                 data = pd.DataFrame([pd.read_json(metric_file, typ='series')])
