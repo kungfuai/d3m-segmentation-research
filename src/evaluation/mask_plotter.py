@@ -94,7 +94,8 @@ class MaskPlotter:
                 'metrics', 
                 'confusion-matrices',
                 'calibration-plots'
-            ]:                dataset_size, condition = MetricPlotter.parse_dir_name(d)
+            ]:                
+                dataset_size, condition = MetricPlotter.parse_dir_name(d)
                 one_image_label = (condition=='one_image_label')
 
                 if self.args.num_classes > 1:

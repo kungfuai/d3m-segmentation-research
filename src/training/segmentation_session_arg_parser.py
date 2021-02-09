@@ -105,3 +105,9 @@ class SegmentationSessionArgParser(ArgumentParser):
             default='focal',
             help="Loss function to use for segmentation training - options are 'focal' and 'xent'",
         )
+        self.add_argument(
+            "--tile_size",
+            type=int,
+            default=126,
+            help="Size of Sentinel-2 image tiles (in pixels)",
+        )

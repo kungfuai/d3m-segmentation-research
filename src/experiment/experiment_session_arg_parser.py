@@ -107,3 +107,9 @@ class ExperimentSessionArgParser(ArgumentParser):
             default=10,
             help="Number of bins to use in approximations of calibration errors",
         )
+        self.add_argument(
+            "--tile_size",
+            type=int,
+            default=126,
+            help="Size of Sentinel-2 image tiles (in pixels)",
+        )

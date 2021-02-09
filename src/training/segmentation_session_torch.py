@@ -73,7 +73,8 @@ class SegmentationSessionTorch:
             transform=partial(
                 preprocess,
                 one_image_label=self.args.one_image_label,
-                one_pixel_mask=self.args.one_pixel_mask
+                one_pixel_mask=self.args.one_pixel_mask,
+                tile_size=self.args.tile_size
             )
         )
 
@@ -103,7 +104,8 @@ class SegmentationSessionTorch:
                 transform=partial(
                     preprocess,
                     one_image_label=self.args.one_image_label,
-                    one_pixel_mask=self.args.one_pixel_mask
+                    one_pixel_mask=self.args.one_pixel_mask,
+                    tile_size=self.args.tile_size
                 )
             )
 

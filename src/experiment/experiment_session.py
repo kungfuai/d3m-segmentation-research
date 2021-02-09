@@ -78,6 +78,9 @@ class ExperimentSession:
             setattr(train_args, "one_pixel_mask", True)
         elif condition == 'one_image_label':
             setattr(train_args, "one_image_label", True)
+
+        setattr(train_args, "tile_size", self.args.tile_size)
+
         return train_args
 
     def set_eval_args(self, train_size, condition):
@@ -113,6 +116,7 @@ class ExperimentSession:
             setattr(eval_args, "one_image_label", True)
 
         setattr(eval_args, "num_bins", self.args.num_bins)
+        setattr(eval_args, "tile_size", self.args.tile_size)
         
         return eval_args
 

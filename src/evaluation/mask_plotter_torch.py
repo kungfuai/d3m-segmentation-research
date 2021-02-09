@@ -2,6 +2,7 @@ import logging
 import os 
 import random
 import json
+from functools import partial
 
 import matplotlib.pyplot as plt 
 import matplotlib.patches as mpatches
@@ -53,7 +54,7 @@ class MaskPlotterTorch(MaskPlotter):
         for _ in range(self.args.batch_no):
             img_dict = next(test_dataset_raw)
 
-        size = (self.args.n_examples, 126, 126)
+        size = (self.args.n_examples, self.args.tile_size, self.args.tile_size)
         imgs = np.stack(
             [
                 img_dict['B04'].reshape(size), 
@@ -69,7 +70,10 @@ class MaskPlotterTorch(MaskPlotter):
             self.args.test_records,
             index_path=None,
             shuffle_queue_size=0,
-            transform=preprocess
+            transform=partial(
+                preprocess,
+                tile_size=self.args.tile_size
+            )
         )
         self.test_dataset = iter(torch.utils.data.DataLoader(
             test_dataset,
@@ -124,10 +128,11 @@ class MaskPlotterTorch(MaskPlotter):
             imgs = batch[0].to(self.device)
 
         self.masks = []
+        pad = (128 - self.args.tile_size) // 2
         for _, models in self.models.items():
             preds = [model.predict(imgs) for model in models]
             preds = [p.detach().cpu().numpy().squeeze() for p in preds]
-            preds = [np.round(p[:, 1:-1, 1:-1]) for p in preds]
+            preds = [np.round(p[:, pad:-pad, pad:-pad]) for p in preds]
             masks = np.stack(self.labels + preds) 
             self.masks.append(masks)
         self.masks = np.stack(self.masks)

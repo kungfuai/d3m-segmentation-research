@@ -2,6 +2,7 @@ import os
 import random
 import logging
 import json
+from functools import partial
 
 import numpy as np
 import pandas as pd
@@ -54,7 +55,10 @@ class EvaluationSessionTorch:
             self.args.test_records,
             index_path=None,
             shuffle_queue_size=0,
-            transform=preprocess
+            transform=partial(
+                preprocess,
+                tile_size=self.args.tile_size
+            )
         )
 
         self.test_loader = torch.utils.data.DataLoader(
@@ -98,8 +102,9 @@ class EvaluationSessionTorch:
             acc /= (labels.shape[2] ** 2)
             accs.append(acc)
 
-            gt = labels[:, 1:-1, 1:-1].flatten()
-            p = preds[:, 1:-1, 1:-1].flatten()
+            pad = (128 - self.args.tile_size) // 2
+            gt = labels[:, pad:-pad, pad:-pad].flatten()
+            p = preds[:, pad:-pad, pad:-pad].flatten()
 
             all_labels.append(gt)
             all_preds.append(p)
@@ -158,9 +163,6 @@ class EvaluationSessionTorch:
             for w, val in zip(bin_sizes, diffs)
         ]
 
-        print(bin_sizes)
-        print(bin_confs)
-        print(bin_freqs)
         max_cal_e = np.nanmax(diffs)
         exp_cal_e = np.nansum(weighted_diffs)
 

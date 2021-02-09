@@ -95,7 +95,7 @@ def shuffle(tiles, val_split, train_sizes):
     trains = [train_tiles[:ts] for ts in train_sizes]
     return trains, val, test
 
-def to_tf_records(data, out_folder, name):
+def to_tf_records(data, out_folder, name, tile_size):
 
     out_path = os.path.join(out_folder, 'segmentation-' + name + '.tfrecord')
     writer = tf.io.TFRecordWriter(out_path, options='')
@@ -103,7 +103,7 @@ def to_tf_records(data, out_folder, name):
     progress_bar = tf.keras.utils.Progbar(target = len(data))
     for i, record in enumerate(data):
 
-        pixel = np.random.randint(0,126,size=(2))
+        pixel = np.random.randint(0,tile_size,size=(2))
         class_label = np.argmax(np.bincount(record['clc_data'].flatten()))
 
         example = tf.train.Example(
@@ -179,10 +179,10 @@ if __name__ == "__main__":
     trains, val, test = shuffle(tiles, args.val_split, args.train_sizes)
     
     for train in trains:
-        to_tf_records(train, args.out_folder, f'train-{len(train)}')
+        to_tf_records(train, args.out_folder, f'train-{len(train)}', args.tile_size)
 
-    to_tf_records(val, args.out_folder, 'val')
-    to_tf_records(test, args.out_folder, 'test')
+    to_tf_records(val, args.out_folder, 'val', args.tile_size)
+    to_tf_records(test, args.out_folder, 'test', args.tile_size)
 
 
 

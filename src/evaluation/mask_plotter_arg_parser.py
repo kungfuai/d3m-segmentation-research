@@ -40,3 +40,9 @@ class MaskPlotterArgParser(ArgumentParser):
             default=1,
             help="Number of classes in segmentation model",
         )
+        self.add_argument(
+            "--tile_size",
+            type=int,
+            default=126,
+            help="Size of Sentinel-2 image tiles (in pixels)",
+        )

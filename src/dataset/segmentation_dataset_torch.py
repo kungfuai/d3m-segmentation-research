@@ -10,20 +10,25 @@ def normalize(img_dict, band_key, size):
 def preprocess(
     img_dict,
     one_image_label=False,
-    one_pixel_mask=False
+    one_pixel_mask=False,
+    tile_size=126
 ):
-    B01  = normalize(img_dict, 'B01', 21)
-    B02  = normalize(img_dict, 'B02', 126)
-    B03  = normalize(img_dict, 'B03', 126)
-    B04  = normalize(img_dict, 'B04', 126)
-    B05  = normalize(img_dict, 'B05', 63)
-    B06  = normalize(img_dict, 'B06', 63)
-    B07  = normalize(img_dict, 'B07', 63)
-    B08  = normalize(img_dict, 'B08', 126)
-    B8A  = normalize(img_dict, 'B8A', 63)
-    B09  = normalize(img_dict, 'B09', 21)
-    B11  = normalize(img_dict, 'B11', 63)
-    B12  = normalize(img_dict, 'B12', 63)
+
+    medium = tile_size // 2
+    small = tile_size // 6
+
+    B01  = normalize(img_dict, 'B01', small)
+    B02  = normalize(img_dict, 'B02', tile_size)
+    B03  = normalize(img_dict, 'B03', tile_size)
+    B04  = normalize(img_dict, 'B04', tile_size)
+    B05  = normalize(img_dict, 'B05', medium)
+    B06  = normalize(img_dict, 'B06', medium)
+    B07  = normalize(img_dict, 'B07', medium)
+    B08  = normalize(img_dict, 'B08', tile_size)
+    B8A  = normalize(img_dict, 'B8A', medium)
+    B09  = normalize(img_dict, 'B09', small)
+    B11  = normalize(img_dict, 'B11', medium)
+    B12  = normalize(img_dict, 'B12', medium)
     bands_10m = torch.stack([B04, B03, B02, B08], axis=2)
     bands_20m = torch.stack([B05, B06, B07, B8A, B11, B12], axis=2)
     bands_60m = torch.stack([B01, B09], axis=2)
@@ -31,7 +36,7 @@ def preprocess(
     bands_20m = torch.unsqueeze(bands_20m.permute(2,0,1), 0)
     bands_20m = torch.nn.functional.interpolate(
         bands_20m, 
-        size=(126,126),
+        size=(tile_size,tile_size),
         mode='bicubic',
         align_corners=False
     )
@@ -40,7 +45,7 @@ def preprocess(
     bands_60m = torch.unsqueeze(bands_60m.permute(2,0,1), 0)
     bands_60m = torch.nn.functional.interpolate(
         bands_60m, 
-        size=(126,126),
+        size=(tile_size,tile_size),
         mode='bicubic',
         align_corners=False
     )
@@ -51,9 +56,10 @@ def preprocess(
         axis=2
     ).permute(2,0,1)
 
+    pad = (128 - tile_size) // 2
     img = torch.nn.functional.pad(
         img, 
-        (1,1,1,1,0,0)
+        (pad,pad,pad,pad,0,0)
     )
 
     if one_image_label:
@@ -61,12 +67,12 @@ def preprocess(
         return img, labels
     
     else:
-        labels = img_dict['Corine_labels'].reshape((126, 126))
+        labels = img_dict['Corine_labels'].reshape((tile_size, tile_size))
         labels = torch.tensor(labels, dtype=torch.float32)
         
         if one_pixel_mask:
-            labels_one = torch.zeros((126,126), dtype=torch.float32)
-            mask = torch.zeros((126,126), dtype=torch.float32)
+            labels_one = torch.zeros((tile_size,tile_size), dtype=torch.float32)
+            mask = torch.zeros((tile_size,tile_size), dtype=torch.float32)
 
             pi, pj = img_dict['random_pixel']
             labels_one[pi][pj] = labels[pi][pj]
@@ -74,10 +80,10 @@ def preprocess(
             labels = labels_one
 
         else:    
-            mask = torch.ones((126,126), dtype=torch.int32)
+            mask = torch.ones((tile_size,tile_size), dtype=torch.int32)
                     
-        labels = torch.nn.functional.pad(labels, (1,1,1,1))
-        mask = torch.nn.functional.pad(mask, (1,1,1,1))
+        labels = torch.nn.functional.pad(labels, (pad,pad,pad,pad))
+        mask = torch.nn.functional.pad(mask, (pad,pad,pad,pad))
 
         labels = torch.unsqueeze(labels, 0)
         mask = torch.unsqueeze(mask, 0)
