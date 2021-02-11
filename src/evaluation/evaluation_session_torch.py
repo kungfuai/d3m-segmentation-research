@@ -110,13 +110,12 @@ class EvaluationSessionTorch:
             preds = preds.detach().cpu().numpy().squeeze()
             batch_sizes.append(labels.shape[0])
 
-            acc = np.sum((np.round(preds) == labels)) / labels.shape[0]
-            acc /= (labels.shape[2] ** 2)
-            accs.append(acc)
-
             pad = (128 - self.args.tile_size) // 2
             gt = labels[:, pad:-pad, pad:-pad].flatten()
             p = preds[:, pad:-pad, pad:-pad].flatten()
+
+            acc = np.sum((np.round(p) == gt)) / gt.shape[0]
+            accs.append(acc)
 
             all_labels.append(gt)
             all_preds.append(p)
