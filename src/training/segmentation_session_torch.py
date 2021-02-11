@@ -138,11 +138,16 @@ class SegmentationSessionTorch:
         if self.args.data_parameters:
             train_file = self.args.train_records.split('/')[-1]
             train_file = train_file.split('.')[0]
-            nr_instances = int(train_file.split('-')[-1])
+            if len(train_file.split('-')) == 4:
+                nr_instances = int(train_file.split('-')[-2])
+            else:
+                nr_instances = int(train_file.split('-')[-1])
+
             if self.args.num_classes == 1:
                 nr_classes = 2
             else:
                 nr_classes = self.args.num_classes
+
             (
                 self.class_params, 
                 self.inst_params, 
@@ -346,7 +351,7 @@ class SegmentationSessionTorch:
 
         torch.save(
             calibration_model.state_dict(), 
-            os.path.join(self.args.log_dir, 'calibration-temperature.pth')
+            os.path.join(self.args.log_dir, 'calibration-temp.pth')
         )
 
 
