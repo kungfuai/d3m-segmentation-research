@@ -10,8 +10,10 @@ from torch.utils.tensorboard import SummaryWriter
 
 from src.dataset.segmentation_dataset_torch import preprocess
 from src.model.unet_torch import Unet 
+from src.model.calibration_model import CalibrationModel
 from src.training.segmentation_session_arg_parser import SegmentationSessionArgParser
 from src.training.losses_torch import BinaryFocalLoss
+from src.training.data_parameters import get_class_inst_data_params_n_optimizer
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +44,9 @@ class SegmentationSessionTorch:
             self.args.epochs_unfrozen + epochs_elapsed, 
             initial_epoch=epochs_elapsed
         )
+
+        if self.args.calibrate:
+            self.calibrate()
     
     def seed_generators(self):
         if self.args.seed is not None:
@@ -83,19 +88,6 @@ class SegmentationSessionTorch:
             batch_size=self.args.batch_size,
         )
 
-        # batch_sizes = []
-        # pos_fracs = []
-        # for batch in self.train_loader:
-        #     batch_sizes.append(batch[1].shape[0])
-        #     if self.args.one_image_label or self.args.one_pixel_mask:
-        #         pos_frac = torch.sum(batch[1]) / batch[1].shape[0]
-        #     else:
-        #         pos_frac = torch.sum(batch[1]) / torch.flatten(batch[1]).shape[0]
-        #     pos_frac = pos_frac.detach().cpu().numpy()
-        #     pos_fracs.append(pos_frac)
-        # pos_weight = 1 / np.average(pos_fracs, weights=batch_sizes)
-        # self.pos_weight = torch.tensor(pos_weight)
-
         if self.args.val_records:
             val_dataset = TFRecordDataset(
                 self.args.val_records,
@@ -128,10 +120,6 @@ class SegmentationSessionTorch:
     def compile_model(self):
         if self.args.loss_function == 'xent':
             self.loss = torch.nn.BCELoss(reduction='none')
-            # self.loss = torch.nn.BCEWithLogitsLoss(
-            #     reduction='none',
-            #     pos_weight=self.pos_weight
-            # )
         elif self.args.loss_function == 'focal':
             self.loss = BinaryFocalLoss()
         else:
@@ -146,6 +134,25 @@ class SegmentationSessionTorch:
             mode='min',
             verbose=True
         )
+
+        if self.args.data_parameters:
+            train_file = self.args.train_records.split('/')[-1]
+            train_file = train_file.split('.')[0]
+            nr_instances = int(train_file.split('-')[-1])
+            if self.args.num_classes == 1:
+                nr_classes = 2
+            else:
+                nr_classes = self.args.num_classes
+            (
+                self.class_params, 
+                self.inst_params, 
+                self.opt_class_params, 
+                self.opt_inst_params
+            ) = get_class_inst_data_params_n_optimizer(
+                nr_classes=nr_classes,
+                nr_instances=nr_instances,
+                device=self.device
+            )
 
     def train(self, epochs, initial_epoch=0):
 
@@ -168,9 +175,24 @@ class SegmentationSessionTorch:
             for batch in self.train_loader:
 
                 self.optimizer.zero_grad()
+                if self.args.data_parameters:
+                    self.opt_class_params.zero_grad()
+                    self.opt_inst_params.zero_grad()
+                
                 train_loss, train_acc = self._loss(batch)
                 train_loss.backward()
                 self.optimizer.step()
+                if self.args.data_parameters:
+                    self.opt_class_params.step()
+                    self.opt_inst_params.step()
+                    self.class_params.data = self.class_params.data.clamp_(
+                        np.log(1/20),
+                        np.log(20)
+                    )
+                    self.inst_params.data = self.inst_params.data.clamp_(
+                        np.log(1/20),
+                        np.log(20)
+                    )
 
                 train_losses.append(train_loss.item())
                 train_accs.append(train_acc)
@@ -184,7 +206,7 @@ class SegmentationSessionTorch:
                     if i == self.args.validation_steps:
                         break
 
-                    loss, acc = self._loss(batch)
+                    loss, acc = self._loss(batch, validation=True)
                     val_losses.append(loss.item())
                     val_accs.append(acc)
                     val_bs.append(batch[1].shape[0])
@@ -219,6 +241,19 @@ class SegmentationSessionTorch:
             tb_writer.add_scalar('Accuracy/train', train_acc, epoch)
             tb_writer.add_scalar('Accuracy/validation', val_acc, epoch)
 
+            if self.args.data_parameters:
+                data = torch.exp(self.class_params)
+                tb_writer.add_scalar('class-params/highest', torch.max(data).item(), epoch)
+                tb_writer.add_scalar('class-params/lowest', torch.min(data).item(), epoch)
+                tb_writer.add_scalar('class-params/mean', torch.mean(data).item(), epoch)
+                tb_writer.add_scalar('class-params/std', torch.std(data).item(), epoch)
+
+                data = torch.exp(self.inst_params)
+                tb_writer.add_scalar('inst-params/highest', torch.max(data).item(), epoch)
+                tb_writer.add_scalar('inst-params/lowest', torch.min(data).item(), epoch)
+                tb_writer.add_scalar('inst-params/mean', torch.mean(data).item(), epoch)
+                tb_writer.add_scalar('inst-params/std', torch.std(data).item(), epoch)
+
             if stopping_loss is None:
                 stopping_loss = val_loss
                 torch.save(
@@ -241,18 +276,35 @@ class SegmentationSessionTorch:
 
         return epoch + 1
 
-    def _loss(self, batch):
+    def _loss(self, batch, validation=False):
         inputs = batch[0].to(self.device)
         labels = batch[1].to(self.device)
-        outputs = self.model(inputs)
+        logits = self.model(inputs)
+
+        if self.args.data_parameters:
+            if not validation:
+                class_param_minibatch = self.class_params[labels.type(torch.LongTensor)]
+                inst_param_minibatch = self.inst_params[batch[2]]
+                sigma_class_minibatch = torch.exp(class_param_minibatch)
+                sigma_inst_minibatch = torch.exp(inst_param_minibatch)
+                if not self.args.one_image_label:
+                    sigma_inst_minibatch = sigma_inst_minibatch.unsqueeze(-1).unsqueeze(-1)
+                logits = logits / (sigma_class_minibatch + sigma_inst_minibatch)
+
+        outputs = torch.sigmoid(logits)
         loss = self.loss(outputs, labels)
+
+        if self.args.data_parameters: # weight decay
+            if not validation:
+                loss = loss + 0.5 * 5e-4 * (inst_param_minibatch ** 2).sum()
+                loss = loss + 0.5 * 5e-4 * (class_param_minibatch ** 2).sum()
 
         preds = torch.round(outputs)
         acc = (preds == labels)
 
-        if len(batch) == 3:
-            loss = loss * batch[2].to(self.device)
-            acc = acc * batch[2].to(self.device)
+        if len(batch) == 4:
+            loss = loss * batch[3].to(self.device)
+            acc = acc * batch[3].to(self.device)
 
         loss = loss.mean()
         acc = acc.sum().item() / labels.shape[0]
@@ -264,6 +316,39 @@ class SegmentationSessionTorch:
                 acc = acc / (labels.shape[2] ** 2)
 
         return loss, acc
+
+    def calibrate(self):
+
+        all_logits = []
+        all_labels = []
+        for batch in self.val_loader:
+            logits = self.model.predict(batch[0].to(self.device))
+            all_logits.append(logits)
+            all_labels.append(batch[1])
+        all_logits = torch.cat(all_logits).to(self.device)
+        all_labels = torch.cat(all_labels).to(self.device)
+
+        calibration_model = CalibrationModel()
+        calibration_loss = torch.nn.BCEWithLogitsLoss()
+        optimizer = torch.optim.LBFGS(
+            [calibration_model.temperature],
+            lr=0.01,
+            max_iter=50
+        )
+
+        def closure():
+            new_logits = calibration_model(all_logits)
+            loss = calibration_loss(new_logits, all_labels)
+            loss.backward()
+            return loss
+
+        optimizer.step(closure)
+
+        torch.save(
+            calibration_model.state_dict(), 
+            os.path.join(self.args.log_dir, 'calibration-temperature.pth')
+        )
+
 
 if __name__ == "__main__":
     args = SegmentationSessionArgParser().parse_args()

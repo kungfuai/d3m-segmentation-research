@@ -130,7 +130,7 @@ class MaskPlotterTorch(MaskPlotter):
         self.masks = []
         pad = (128 - self.args.tile_size) // 2
         for _, models in self.models.items():
-            preds = [model.predict(imgs) for model in models]
+            preds = [torch.sigmoid(model.predict(imgs)) for model in models]
             preds = [p.detach().cpu().numpy().squeeze() for p in preds]
             preds = [np.round(p[:, pad:-pad, pad:-pad]) for p in preds]
             masks = np.stack(self.labels + preds) 

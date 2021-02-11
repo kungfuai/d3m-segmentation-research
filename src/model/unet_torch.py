@@ -43,13 +43,12 @@ class Unet(SegmentationModel):
                 torch.nn.AdaptiveAvgPool2d((1, 1)),
                 torch.nn.Flatten(),
                 torch.nn.Linear(16,classes),
-                Activation(activation),
             )
         else:
             self.segmentation_head = SegmentationHead(
                 in_channels=decoder_channels[-1],
                 out_channels=classes,
-                activation=activation,
+                activation=None,
                 kernel_size=3,
             )
 
@@ -66,11 +65,8 @@ class SegmentationHeadImageLabelEval(torch.nn.Module):
             if isinstance(layer, torch.nn.Linear):
                 self.linear_layer = layer
             
-        self.sigmoid = torch.nn.Sigmoid()
-
     def forward(self, features):
         
         features = features.permute(0,2,3,1)
         logits = self.linear_layer(features)
-        activations = self.sigmoid(logits)
-        return activations
+        return logits

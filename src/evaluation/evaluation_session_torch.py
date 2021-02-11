@@ -12,9 +12,10 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt 
 
-from src.evaluation.evaluation_session_arg_parser import EvaluationSessionArgParser
 from src.dataset.segmentation_dataset_torch import preprocess
 from src.model.unet_torch import Unet, SegmentationHeadImageLabelEval
+from src.model.calibration_model import CalibrationModel
+from src.evaluation.evaluation_session_arg_parser import EvaluationSessionArgParser
 from src.evaluation.metric_plotter import MetricPlotter
 
 LOGGER = logging.getLogger(__name__)
@@ -84,6 +85,12 @@ class EvaluationSessionTorch:
                 self.model.segmentation_head
             )
 
+        if self.args.calibrate:
+            self.calibration_model = CalibrationModel()
+            self.calibration_model.load_state_dict(
+                torch.load(self.args.calibration_temp)
+            )
+
     def evaluate(self):
 
         accs = []
@@ -94,7 +101,12 @@ class EvaluationSessionTorch:
         for batch in self.test_loader:
             inputs = batch[0].to(self.device)
             labels = batch[1].squeeze().numpy()
-            preds = self.model.predict(inputs)
+
+            logits = self.model.predict(inputs)
+            if self.args.calibrate:
+                logits = self.calibration_model(logits)
+            preds = torch.sigmoid(logits)
+
             preds = preds.detach().cpu().numpy().squeeze()
             batch_sizes.append(labels.shape[0])
 
@@ -200,11 +212,19 @@ class EvaluationSessionTorch:
             data=data
         )
         dir_str = self.args.log_dir.split('/')[-2]
-        ds_size, condition = dir_str.split('-')
-        plt.title(f'Model Calibration: {condition} - {ds_size} images')
-        plt.savefig(os.path.join(
-            self.calibration_dir, f'calibration-plot-{ds_size}-{condition}.png'
-        ))
+
+        if len(dir_str.split('-')) == 2:
+            ds_size, condition = dir_str.split('-')
+            plt.title(f'Model Calibration: {condition} - {ds_size} images')
+            plt.savefig(os.path.join(
+                self.calibration_dir, f'calibration-plot-{ds_size}-{condition}.png'
+            ))
+        else:
+            ds_size, condition, k = dir_str.split('-')
+            plt.title(f'Model Calibration: {condition} - {ds_size} images - {k}')
+            plt.savefig(os.path.join(
+                self.calibration_dir, f'calibration-plot-{ds_size}-{condition}-{k}.png'
+            )) 
 
 if __name__ == "__main__":
     args = EvaluationSessionArgParser().parse_args()

@@ -1,6 +1,7 @@
 import argparse
 import os
 import json
+import random
 
 import rasterio
 import numpy as np
@@ -86,14 +87,11 @@ def split(bands, tile_size):
 
     return tiles
 
-def shuffle(tiles, val_split, train_sizes):
+def shuffle(train_tiles, train_sizes):
 
-    n = int(len(tiles) * val_split)
-    test = tiles[-n:]
-    val = tiles[-2*n:-n]
-    train_tiles = tiles[:-2*n]
+    random.shuffle(train_tiles)
     trains = [train_tiles[:ts] for ts in train_sizes]
-    return trains, val, test
+    return trains
 
 def to_tf_records(data, out_folder, name, tile_size):
 
@@ -138,7 +136,9 @@ def to_tf_records(data, out_folder, name, tile_size):
                     'random_pixel': tf.train.Feature(
                         int64_list=tf.train.Int64List(value=pixel)),
                     'class_label': tf.train.Feature(
-                        int64_list=tf.train.Int64List(value=[class_label]))
+                        int64_list=tf.train.Int64List(value=[class_label])),
+                    'sample_index': tf.train.Feature(
+                        int64_list=tf.train.Int64List(value=[i]))
                 }
             )
         )
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--corine', dest = 'corine', type = str,
                         help = 'path to Corine Land Cover segmentation map')
     parser.add_argument('-t', '--tile_size', dest = 'tile_size', type = int,
-                        help = 'tile size (in pixels squared)', default = 126)
+                        help = 'tile size (in pixels squared)', default = 120)
     parser.add_argument('-v', '--val_split', dest = 'val_split', type = float,
                         help = 'validation split', default = 0.15)
     parser.add_argument('-o', '--out_folder', dest = 'out_folder', type = str,
@@ -163,6 +163,8 @@ if __name__ == "__main__":
                         help = 'size of training sets', nargs = '+')
     parser.add_argument('-b', '--binary', dest='binary', type = bool, 
                         help = 'label images for binary classification', default = True)
+    parser.add_argument('-d', '--duplicates', dest='duplicates', type = int, 
+                        help = 'number of random duplicates for each training set size', default = 0)
 
     args = parser.parse_args()
 
@@ -176,13 +178,20 @@ if __name__ == "__main__":
 
     tiles = split(bands, args.tile_size) 
 
-    trains, val, test = shuffle(tiles, args.val_split, args.train_sizes)
-    
-    for train in trains:
-        to_tf_records(train, args.out_folder, f'train-{len(train)}', args.tile_size)
+    n = int(len(tiles) * args.val_split)
+    test = tiles[-n:]
+    val = tiles[-2*n:-n]
+    # to_tf_records(test, args.out_folder, 'test', args.tile_size)
+    # to_tf_records(val, args.out_folder, 'val', args.tile_size)
 
-    to_tf_records(val, args.out_folder, 'val', args.tile_size)
-    to_tf_records(test, args.out_folder, 'test', args.tile_size)
+    train_tiles = tiles[:-2*n]
+
+    for i in range(args.duplicates):
+        trains = shuffle(train_tiles, args.train_sizes)
+
+        for train in trains:
+            to_tf_records(train, args.out_folder, f'train-{len(train)}-{i}', args.tile_size)
+
 
 
 

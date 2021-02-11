@@ -111,3 +111,16 @@ class SegmentationSessionArgParser(ArgumentParser):
             default=126,
             help="Size of Sentinel-2 image tiles (in pixels)",
         )
+        self.add_argument(
+            "--data_parameters",
+            type=bool,
+            default=False,
+            help="Whether to implement data parameters curriculum learning method from " + 
+                "https://proceedings.neurips.cc/paper/2019/file/926ffc0ca56636b9e73c565cf994ea5a-Paper.pdf" ,
+        )
+        self.add_argument(
+            "--calibrate",
+            type=bool,
+            default=False,
+            help="If True - calibrates model predictions on validation set"
+        )

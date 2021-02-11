@@ -1,5 +1,3 @@
-# from https://www.kaggle.com/bigironsphere/loss-function-library-keras-pytorch
-
 import torch
 
 class BinaryFocalLoss(torch.nn.Module):

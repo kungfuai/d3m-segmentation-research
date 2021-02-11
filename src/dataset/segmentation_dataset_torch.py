@@ -62,9 +62,11 @@ def preprocess(
         (pad,pad,pad,pad,0,0)
     )
 
+    sample_idx = torch.LongTensor([img_dict['sample_index'][0]])
+
     if one_image_label:
         labels = torch.tensor(img_dict['class_label'], dtype=torch.float32)
-        return img, labels
+        return img, labels, sample_idx
     
     else:
         labels = img_dict['Corine_labels'].reshape((tile_size, tile_size))
@@ -88,4 +90,4 @@ def preprocess(
         labels = torch.unsqueeze(labels, 0)
         mask = torch.unsqueeze(mask, 0)
 
-        return img, labels, mask
+        return img, labels, sample_idx, mask

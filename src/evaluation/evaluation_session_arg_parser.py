@@ -63,4 +63,15 @@ class EvaluationSessionArgParser(ArgumentParser):
             default=126,
             help="Size of Sentinel-2 image tiles (in pixels)",
         )
-
+        self.add_argument(
+            "--calibrate",
+            type=bool,
+            default=False,
+            help="If True - calibrates model predictions on validation set"
+        )
+        self.add_argument(
+            "--calibration_temp",
+            type=str,
+            default='logs/',
+            help="Temperature of trained calibration model - only used if calibrate == True",
+        )
