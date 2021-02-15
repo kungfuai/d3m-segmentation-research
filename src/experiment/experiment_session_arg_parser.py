@@ -132,3 +132,10 @@ class ExperimentSessionArgParser(ArgumentParser):
             default=1,
             help="Number of times to run each size / condition combination with different data"
         )
+        self.add_argument(
+            "--super_loss",
+            type=bool,
+            default=False,
+            help="Whether to implement super loss curriculum learning method from " + 
+                "https://proceedings.neurips.cc/paper/2020/file/2cfa8f9e50e0f510ede9d12338a5f564-Paper.pdf" ,
+        )

@@ -84,6 +84,7 @@ class ExperimentSession:
         setattr(train_args, "tile_size", self.args.tile_size)
         setattr(train_args, "data_parameters", self.args.data_parameters)
         setattr(train_args, "calibrate", self.args.calibrate)
+        setattr(train_args, "super_loss", self.args.super_loss)
 
         return train_args
 

@@ -12,7 +12,7 @@ from src.dataset.segmentation_dataset_torch import preprocess
 from src.model.unet_torch import Unet 
 from src.model.calibration_model import CalibrationModel
 from src.training.segmentation_session_arg_parser import SegmentationSessionArgParser
-from src.training.losses_torch import BinaryFocalLoss
+from src.training.losses_torch import BinaryFocalLoss, SuperLoss
 from src.training.data_parameters import get_class_inst_data_params_n_optimizer
 
 LOGGER = logging.getLogger(__name__)
@@ -124,6 +124,9 @@ class SegmentationSessionTorch:
             self.loss = BinaryFocalLoss()
         else:
             raise ValueError("'loss_function' must be one of 'focal' or 'xent'")
+
+        if self.args.super_loss:
+            self.loss = SuperLoss(self.loss)
 
         self.optimizer = torch.optim.Adam(
             self.model.parameters(),
