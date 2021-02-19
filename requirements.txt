@@ -10,7 +10,7 @@ boto3==1.14
 google-cloud-storage==1.31.0
 sqlalchemy==1.3.18
 #pandas==1.0.5
-#model_card_toolkit==0.1.1
+model-card-toolkit==0.1.3
 rasterio
 numpy==1.18.2
 #codecarbon==1.0.0
