@@ -105,7 +105,7 @@ class MaskPlotterTorch(MaskPlotter):
                 ).to(self.device)
 
                 model.load_state_dict(
-                    torch.load(os.path.join(d, 'train', 'model.pth'))
+                    torch.load(os.path.join(d, 'train', 'model.pth'), map_location=self.device)
                 )
 
                 if one_image_label:

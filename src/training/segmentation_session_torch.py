@@ -117,6 +117,11 @@ class SegmentationSessionTorch:
             device=self.device
         ).to(self.device)
 
+        if self.args.model_weights:
+            self.model.load_state_dict(
+                torch.load(self.args.model_weights, map_location=self.device)
+            )
+
     def compile_model(self):
         if self.args.loss_function == 'xent':
             self.loss = torch.nn.BCELoss(reduction='none')

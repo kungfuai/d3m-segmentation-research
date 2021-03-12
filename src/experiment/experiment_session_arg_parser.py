@@ -139,3 +139,9 @@ class ExperimentSessionArgParser(ArgumentParser):
             help="Whether to implement super loss curriculum learning method from " + 
                 "https://proceedings.neurips.cc/paper/2020/file/2cfa8f9e50e0f510ede9d12338a5f564-Paper.pdf" ,
         )
+        self.add_argument(
+            "--use_pseudo_labels",
+            type=bool,
+            default=False,
+            help="Whether to use pseudo labels from an earlier training pass as supervision for second training pass"
+        )

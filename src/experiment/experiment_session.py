@@ -5,6 +5,8 @@ from src.experiment.experiment_session_arg_parser import ExperimentSessionArgPar
 from src.training.segmentation_session import SegmentationSession
 from src.training.segmentation_session_torch import SegmentationSessionTorch
 from src.training.segmentation_session_arg_parser import SegmentationSessionArgParser
+from src.training.update_labels import UpdateLabels
+from src.training.update_labels_arg_parser import UpdateLabelsArgParser
 from src.evaluation.evaluation_session import EvaluationSession
 from src.evaluation.evaluation_session_torch import EvaluationSessionTorch
 from src.evaluation.evaluation_session_arg_parser import EvaluationSessionArgParser
@@ -28,33 +30,49 @@ class ExperimentSession:
         for i, train_size in enumerate(self.args.training_sizes):
             for j, condition in enumerate(self.args.conditions):
                 for k in range(self.args.duplicates):
-                    train_args = self.set_train_args(train_size, condition, k)
-                    eval_args = self.set_eval_args(train_size, condition, k)
 
-                    print(f'\nRunning training session {k+1}/{self.args.duplicates} -- TRAIN SIZE = {train_size}, CONDITION = {condition}\n')
+                    if self.args.use_pseudo_labels:
+                        print(f'\nGenerating pseudo labels {k+1}/{self.args.duplicates} -- TRAIN SIZE = {train_size}, CONDITION = {condition}\n')
+                        update_args = self.set_update_args(train_size, condition, k)
+                        UpdateLabels(update_args).run()
+
+                    if self.args.duplicates > 1:
+                        log_dir_str = f'{train_size}-{condition}-{k}'
+                    else:
+                        log_dir_str = f'{train_size}-{condition}'
+
+                    if self.args.use_pseudo_labels:
+                        self.log_dir = os.path.join(self.args.log_dir, f'{log_dir_str}-pseudo')
+                        run_condition = 'full_pixel_mask'                        
+                    else:
+                        self.log_dir = os.path.join(self.args.log_dir, log_dir_str)
+                        run_condition = condition
+
+                    train_args = self.set_train_args(train_size, run_condition, k, self.args.use_pseudo_labels)
+                    eval_args = self.set_eval_args(train_size, run_condition, k, self.args.use_pseudo_labels)
+
+                    print(f'\nRunning training session {k+1}/{self.args.duplicates} -- TRAIN SIZE = {train_size}, CONDITION = {run_condition}\n')
                     if self.args.framework == 'tensorflow':
-                        training_session = SegmentationSession(train_args).run()
+                        SegmentationSession(train_args).run()
                     elif self.args.framework == 'torch':
-                        training_session = SegmentationSessionTorch(train_args).run()
+                        SegmentationSessionTorch(train_args).run()
                     else:
                         raise ValueError("framework must be either 'tensorflow' or 'torch'")
 
-                    print(f'\nRunning evaluation session {k+1}/{self.args.duplicates} -- TRAIN SIZE = {train_size}, CONDITION = {condition}\n')
+                    print(f'\nRunning evaluation session {k+1}/{self.args.duplicates} -- TRAIN SIZE = {train_size}, CONDITION = {run_condition}\n')
                     if self.args.framework == 'tensorflow':
-                        evaluation_session = EvaluationSession(eval_args).run()
+                        EvaluationSession(eval_args).run()
                     else:
-                        evaluation_session = EvaluationSessionTorch(eval_args).run()
+                        EvaluationSessionTorch(eval_args).run()
 
-    def set_train_args(self, train_size, condition, k):
+    def set_train_args(self, train_size, condition, k, pseudo_labels):
 
         train_args = SegmentationSessionArgParser().parse_args([])
         setattr(train_args, "seed", self.args.seed)
         if self.args.duplicates > 1:
             records = os.path.join(self.args.data_dir, f'segmentation-train-{train_size}-{k}.tfrecord')
-            log_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}-{k}', 'train')
         else:
             records = os.path.join(self.args.data_dir, f'segmentation-train-{train_size}.tfrecord')
-            log_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}', 'train')
             
         setattr(train_args, "train_records", records)
         setattr(
@@ -73,8 +91,8 @@ class ExperimentSession:
         setattr(train_args, "encoder_weights", self.args.encoder_weights)
         setattr(train_args, "loss_function", self.args.loss_function)
 
-        os.makedirs(log_dir, exist_ok=True)
-        setattr(train_args, "log_dir", log_dir)
+        os.makedirs(os.path.join(self.log_dir, 'train'), exist_ok=True)
+        setattr(train_args, "log_dir", os.path.join(self.log_dir, 'train'))
 
         if condition == 'one_pixel_mask':
             setattr(train_args, "one_pixel_mask", True)
@@ -86,16 +104,17 @@ class ExperimentSession:
         setattr(train_args, "calibrate", self.args.calibrate)
         setattr(train_args, "super_loss", self.args.super_loss)
 
+        if self.args.duplicates > 1:
+            model_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}-{k}', 'train')
+        else:
+            model_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}', 'train')
+        setattr(train_args, "model_weights", os.path.join(model_dir, 'model.pth'))
+
         return train_args
 
-    def set_eval_args(self, train_size, condition, k):
+    def set_eval_args(self, train_size, condition, k, pseudo_labels):
 
         eval_args = EvaluationSessionArgParser().parse_args([])
-
-        if self.args.duplicates > 1:
-            log_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}-{k}')
-        else:
-            log_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}')
 
         setattr(eval_args, "seed", self.args.seed)
         setattr(
@@ -111,10 +130,10 @@ class ExperimentSession:
         else:
             model_file = 'model.pth'
 
-        setattr(eval_args, "model_weights", os.path.join(log_dir, 'train', model_file))
+        setattr(eval_args, "model_weights", os.path.join(self.log_dir, 'train', model_file))
 
-        os.makedirs(os.path.join(log_dir, 'eval'), exist_ok=True)
-        setattr(eval_args, "log_dir", os.path.join(log_dir, 'eval'))
+        os.makedirs(os.path.join(self.log_dir, 'eval'), exist_ok=True)
+        setattr(eval_args, "log_dir", os.path.join(self.log_dir, 'eval'))
 
         if condition == 'one_image_label':
             setattr(eval_args, "one_image_label", True)
@@ -123,11 +142,39 @@ class ExperimentSession:
         setattr(eval_args, "tile_size", self.args.tile_size)
         setattr(eval_args, "calibrate", self.args.calibrate)
 
-        calibration_temp = os.path.join(log_dir, 'train', 'calibration-temp.pth')
+        calibration_temp = os.path.join(self.log_dir, 'train', 'calibration-temp.pth')
         setattr(eval_args, "calibration_temp", calibration_temp)
 
         return eval_args
 
+    def set_update_args(self, train_size, condition, k):
+
+        update_args = UpdateLabelsArgParser().parse_args([])
+        
+        setattr(update_args, "seed", self.args.seed)
+
+        if self.args.duplicates > 1:
+            records = os.path.join(self.args.data_dir, f'segmentation-train-{train_size}-{k}.tfrecord')
+            model_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}-{k}', 'train')
+        else:
+            records = os.path.join(self.args.data_dir, f'segmentation-train-{train_size}.tfrecord')
+            model_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}', 'train')
+
+        setattr(update_args, "update_records", records)
+        setattr(update_args, "num_classes", self.args.num_classes)
+        setattr(update_args, "batch_size", self.args.batch_size)
+        setattr(update_args, "model_weights", os.path.join(model_dir, 'model.pth'))
+
+        if condition == 'one_image_label':
+            setattr(update_args, "one_image_label", True)
+
+        setattr(update_args, "tile_size", self.args.tile_size)
+        setattr(update_args, "calibrate", self.args.calibrate)
+
+        calibration_temp = os.path.join(model_dir, 'train', 'calibration-temp.pth')
+        setattr(update_args, "calibration_temp", calibration_temp)
+
+        return update_args
 
 if __name__ == "__main__":
     args = ExperimentSessionArgParser().parse_args()

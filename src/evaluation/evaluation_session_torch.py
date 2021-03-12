@@ -76,7 +76,7 @@ class EvaluationSessionTorch:
         ).to(self.device)
 
         self.model.load_state_dict(
-            torch.load(self.args.model_weights)
+            torch.load(self.args.model_weights, map_location=self.device)
         )
 
         if self.args.one_image_label:
@@ -88,7 +88,7 @@ class EvaluationSessionTorch:
         if self.args.calibrate:
             self.calibration_model = CalibrationModel()
             self.calibration_model.load_state_dict(
-                torch.load(self.args.calibration_temp)
+                torch.load(self.args.calibration_temp, map_location=self.device)
             )
 
     def evaluate(self):
