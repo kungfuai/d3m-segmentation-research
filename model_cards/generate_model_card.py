@@ -12,6 +12,8 @@ model_card_output_path = "model_cards"
 mct = model_card_toolkit.ModelCardToolkit(model_card_output_path)
 model_card = mct.scaffold_assets()
 
+
+
 # Section 1 - Model Details
 model_card.model_details.name = 'Sentinel-2 Binary Segmentation Model'
 model_card.model_details.overview = (
@@ -32,15 +34,63 @@ model_card.model_details.references = [
     'https://arxiv.org/pdf/2003.02899.pdf', 'https://www.mdpi.com/2072-4292/12/2/207/htm'
 ]
 
-# Section 2 - Model Parameters
+
+# Section 2 - Considerations
+model_card.considerations.users = [
+    'The intended users of this model are subject matter experts who are interacting with Uncharted '
+    'Software\'s Distil platform. The Distil platform visualizes and communicates output from '
+    'automated machine learning pipelines, some of which will include this model.' 
+]
+model_card.considerations.use_cases = [
+    'The intended use case is to generate an approximate binary segmentation map given a small number '
+    '(i.e. 10s to 100s) of image-level labels. Importantly, the model was only evaluated on land cover data '
+    'over Estonia, and it is not known how its performance would change over different geographic areas.'
+]
+model_card.considerations.limitations = [
+    'The model is not as accurate as a model trained with dense pixel-level labels (full supervision). Specifically, '
+    'a fully supervised model reaches a mean accuracy of 0.826 with 10 training images (compared to 0.74). However, '
+    'the difference is smaller with 100 training images - a fully supervised model reaches a mean accuracy of 0.823'
+    '(compared to 0.821). Model performance will be degraded by occlusion, '
+    'such as cloud coverage, poor lighting, and issues with Sentinel-2 sensors, though the magnitude of this  '
+    'degradation has not been measured.'
+]
+model_card.considerations.ethical_considerations = [
+    {
+        'name': 'resource allocation based on segmentation map', 
+        'mitigation_strategy': (
+            'If this model is used to allocate resources (e.g. mitigation efforts for locust infestations) based on '
+            'land cover predictions (e.g. agriculture vs. not agriculture) and there exist systematic biases '
+            'in data collection (e.g. the satellite passes over certain locations more frequently than others '
+            'or the satellite is occluded in certain locations more frequently than others) then systematic biases '
+            'will exist in resource allocation unless intentionally addressed. This risk is highlighted because no '
+            'steps are taken during the training procedure to intentionally account for systematic bias in data collection.'
+        )
+    }
+]
+
+
+# Section 3 - Model Parameters
 model_card.model_parameters.model_architecture = 'U-Net with a ResNet50 encoder'
+model_card.model_parameters.data.eval.graphics.collection = [
+    {
+        'name': 'Evaluation Dataset Distribution',
+        'image': img_to_base64('model_cards/data/evaluation-set-dist.png')
+    }
+]
+model_card.model_parameters.data.eval.graphics.description = (
+    'This graphic shows the distribution of agriculture and non-agriculture pixels in the evaluation dataset. '
+    'The evaluation dataset consists of a Sentinel-2 tile over Estonia and its corresponding CORINE land cover map. '
+    'The model was only evaluated on this dataset.'
+)
 model_card.model_parameters.data.eval.name = 'CORINE land cover map and Sentinel-2 image of Estonia'
 model_card.model_parameters.data.eval.link = 'https://arxiv.org/pdf/2003.02899.pdf'
 model_card.model_parameters.data.eval.sensitive = False 
 model_card.model_parameters.input_format = 'Multispectral Sentinel-2 images with dimensions (120, 120, 12) (depth last)'
 model_card.model_parameters.output_format = 'Binary segmentation masks with dimensions (120, 120)'
 
-# Section 3 - Quantitative Analysis
+
+
+# Section 4 - Quantitative Analysis
 model_card.quantitative_analysis.performance_metrics = [
     {
         'type': 'accuracy - 10 train images', 
@@ -86,41 +136,10 @@ model_card.quantitative_analysis.graphics.collection = [
     }
 ]
 model_card.quantitative_analysis.graphics.description = (
-    'The first two graphics show confusion matrices of the model\'s predictions '
+    'These graphics show confusion matrices of the model\'s predictions '
     '(averaged over 10 independent test sets) after training with 10 and 100 images respectively. ' 
 )
 
-# Section 4 - Considerations
-model_card.considerations.users = [
-    'The intended users of this model are subject matter experts who are interacting with Uncharted '
-    'Software\'s Distil platform. The Distil platform visualizes and communicates output from '
-    'automated machine learning pipelines, some of which will include this model.' 
-]
-model_card.considerations.use_cases = [
-    'The intended use case is to generate an approximate binary segmentation map given a small number '
-    '(i.e. 10s to 100s) of image-level labels.'
-]
-model_card.considerations.limitations = [
-    'The model is not as accurate as a model trained with dense pixel-level labels (full supervision). Specifically, '
-    'a fully supervised model reaches a mean accuracy of 0.826 with 10 training images (compared to 0.74). However, '
-    'the difference is smaller with 100 training images - a fully supervised model reaches a mean accuracy of 0.823'
-    '(compared to 0.821). Model performance will be degraded by occlusion, '
-    'such as cloud coverage, poor lighting, and issues with Sentinel-2 sensors, though the magnitude of this  '
-    'degradation has not been measured.'
-]
-model_card.considerations.ethical_considerations = [
-    {
-        'name': 'resource allocation based on segmentation map', 
-        'mitigation_strategy': (
-            'If this model is used to allocate resources (e.g. mitigation efforts for locust infestations) based on '
-            'land cover predictions (e.g. agriculture vs. not agriculture) and there exist systematic biases '
-            'in data collection (e.g. the satellite passes over certain locations more frequently than others '
-            'or the satellite is occluded in certain locations more frequently than others) then systematic biases '
-            'will exist in resource allocation unless intentionally addressed. This risk is highlighted because no '
-            'steps are taken during the training procedure to intentionally account for systematic bias in data collection.'
-        )
-    }
-]
 
 # Write the model card data to a JSON file
 mct.update_model_card_json(model_card)
