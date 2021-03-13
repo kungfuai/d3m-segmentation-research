@@ -69,10 +69,16 @@ class ExperimentSession:
 
         train_args = SegmentationSessionArgParser().parse_args([])
         setattr(train_args, "seed", self.args.seed)
+
         if self.args.duplicates > 1:
-            records = os.path.join(self.args.data_dir, f'segmentation-train-{train_size}-{k}.tfrecord')
+            records_str = f'segmentation-train-{train_size}-{k}'
         else:
-            records = os.path.join(self.args.data_dir, f'segmentation-train-{train_size}.tfrecord')
+            records_str = f'segmentation-train-{train_size}'
+
+        if pseudo_labels:
+            records_str += '-pseudo'
+        
+        records = os.path.join(self.args.data_dir, f'{records_str}.tfrecord')
             
         setattr(train_args, "train_records", records)
         setattr(
