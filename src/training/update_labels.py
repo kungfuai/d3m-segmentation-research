@@ -123,7 +123,6 @@ class UpdateLabels:
 
             writer.write(example.SerializeToString())
             progress_bar.update(i)
-            break
   
 
 if __name__ == "__main__":

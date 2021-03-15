@@ -219,7 +219,10 @@ class EvaluationSessionTorch:
                 self.calibration_dir, f'calibration-plot-{ds_size}-{condition}.png'
             ))
         else:
-            ds_size, condition, k = dir_str.split('-')
+            dir_strs = dir_str.split('-')
+            ds_size = dir_strs[0]
+            condition = dir_strs[1]
+            k = dir_strs[2]
             plt.title(f'Model Calibration: {condition} - {ds_size} images - {k}')
             plt.savefig(os.path.join(
                 self.calibration_dir, f'calibration-plot-{ds_size}-{condition}-{k}.png'
