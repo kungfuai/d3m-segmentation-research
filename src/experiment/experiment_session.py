@@ -36,6 +36,13 @@ class ExperimentSession:
                         update_args = self.set_update_args(train_size, condition, k)
                         UpdateLabels(update_args).run()
 
+                        setattr(
+                            update_args,
+                            "update_records",
+                            os.path.join(self.args.data_dir, f'segmentation-val.tfrecord')
+                        )
+                        UpdateLabels(update_args).run()
+
                     if self.args.duplicates > 1:
                         log_dir_str = f'{train_size}-{condition}-{k}'
                     else:
@@ -115,6 +122,7 @@ class ExperimentSession:
         else:
             model_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}', 'train')
         setattr(train_args, "model_weights", os.path.join(model_dir, 'model.pth'))
+        setattr(train_args, "pseudo_label_conf_threshold", self.args.pseudo_label_conf_threshold)
 
         return train_args
 

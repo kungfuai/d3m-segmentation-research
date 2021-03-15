@@ -145,3 +145,9 @@ class ExperimentSessionArgParser(ArgumentParser):
             default=False,
             help="Whether to use pseudo labels from an earlier training pass as supervision for second training pass"
         )
+        self.add_argument(
+            "--pseudo_label_conf_threshold",
+            type=float,
+            default=0,
+            help="If using pseudo labels for this training run - at what confidence should they be thresholded?",
+        )

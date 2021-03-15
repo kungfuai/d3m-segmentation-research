@@ -11,7 +11,8 @@ def preprocess(
     img_dict,
     one_image_label=False,
     one_pixel_mask=False,
-    tile_size=126
+    tile_size=126,
+    conf_threshold=0
 ):
 
     medium = tile_size // 2
@@ -70,8 +71,15 @@ def preprocess(
     
     else:
         labels = img_dict['Corine_labels'].reshape((tile_size, tile_size))
-        labels = torch.tensor(labels, dtype=torch.float32)
         
+        if labels.dtype == 'float32':
+            labels = torch.tensor(labels)
+            conf = torch.abs(labels - 0.5) > (conf_threshold / 2)
+            mask = torch.where(conf, torch.ones(1), torch.zeros(1))
+            labels = torch.round(labels)
+        else:
+            labels = torch.tensor(labels, dtype=torch.float32)
+
         if one_pixel_mask:
             labels_one = torch.zeros((tile_size,tile_size), dtype=torch.float32)
             mask = torch.zeros((tile_size,tile_size), dtype=torch.float32)

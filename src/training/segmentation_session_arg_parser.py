@@ -137,3 +137,9 @@ class SegmentationSessionArgParser(ArgumentParser):
             default=None,
             help="Parameters of trained segmentation model",
         )
+        self.add_argument(
+            "--pseudo_label_conf_threshold",
+            type=float,
+            default=0,
+            help="If using pseudo labels for this training run - at what confidence should they be thresholded?",
+        )

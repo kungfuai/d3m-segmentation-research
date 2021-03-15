@@ -96,9 +96,9 @@ class UpdateLabels:
 
             pad = (128 - self.args.tile_size) // 2
             p = preds[:, pad:-pad, pad:-pad]
-            all_preds.append(np.round(p))
+            all_preds.append(p)
 
-        self.preds = np.vstack(all_preds).astype(int)
+        self.preds = np.vstack(all_preds)
 
     def write_tfrecords(self):
 
@@ -117,7 +117,7 @@ class UpdateLabels:
                 for key in keys
             }
             feature_dict['Corine_labels'] = tf.train.Feature(
-                int64_list=tf.train.Int64List(value=np.ravel(preds))
+                float_list=tf.train.FloatList(value=np.ravel(preds))
             )
             example = tf.train.Example(features=tf.train.Features(feature=feature_dict))
 

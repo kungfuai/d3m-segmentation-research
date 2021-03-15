@@ -79,7 +79,8 @@ class SegmentationSessionTorch:
                 preprocess,
                 one_image_label=self.args.one_image_label,
                 one_pixel_mask=self.args.one_pixel_mask,
-                tile_size=self.args.tile_size
+                tile_size=self.args.tile_size,
+                conf_threshold=self.args.pseudo_label_conf_threshold
             )
         )
 
@@ -97,7 +98,8 @@ class SegmentationSessionTorch:
                     preprocess,
                     one_image_label=self.args.one_image_label,
                     one_pixel_mask=self.args.one_pixel_mask,
-                    tile_size=self.args.tile_size
+                    tile_size=self.args.tile_size,
+                    conf_threshold=self.args.pseudo_label_conf_threshold
                 )
             )
 
