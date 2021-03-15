@@ -131,8 +131,8 @@ class SegmentationSessionTorch:
             raise ValueError("'loss_function' must be one of 'focal' or 'xent'")
 
         if self.args.super_loss:
-            self.loss = SuperLoss(self.loss)
-
+            self.loss = SuperLoss(self.loss, device=self.device)
+        
         self.optimizer = torch.optim.Adam(
             self.model.parameters(),
             eps=1e-7

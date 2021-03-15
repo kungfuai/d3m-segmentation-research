@@ -29,17 +29,18 @@ class BinaryFocalLoss(torch.nn.Module):
 class SuperLoss(torch.nn.Module):
     """ https://papers.nips.cc/paper/2020/file/2cfa8f9e50e0f510ede9d12338a5f564-Paper.pdf"""
 
-    def __init__(self, base_loss, lam=1.0, tau=0.0):
+    def __init__(self, base_loss, lam=1.0, tau=0.0, device=torch.device('cpu')):
         super().__init__()
         self.base_loss = base_loss
         self.lam = lam
-
         self.tau = tau
+        self.device = device
     
     def forward(self, pr, gt):
         input_loss = self.base_loss(pr, gt)
 
         beta_0 = torch.ones(input_loss.shape) * (-2/(math.e+0.08))
+        beta_0 = beta_0.to(self.device)
         beta = (input_loss - self.tau) / self.lam
         y = 0.5 * torch.max(beta_0, beta)
         
