@@ -287,9 +287,7 @@ if __name__ == "__main__":
 
     n = int(len(tiles) * args.val_split)
     test = tiles[-n:]
-    print(f'test len {len(test)}')
     val = tiles[-2*n:-n]
-    print(f'val len {len(val)}')
     to_tf_records(test, args.out_folder, 'test', args.tile_size, args.estonia_data)
     to_tf_records(val, args.out_folder, 'val', args.tile_size, args.estonia_data)
 

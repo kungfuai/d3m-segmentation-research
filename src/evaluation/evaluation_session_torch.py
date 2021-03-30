@@ -104,7 +104,7 @@ class EvaluationSessionTorch:
 
             logits = self.model.predict(inputs)
             if self.args.calibrate:
-                logits = self.calibration_model(logits)
+                logits = self.calibration_model(logits, self.device)
             preds = torch.sigmoid(logits)
 
             preds = preds.detach().cpu().numpy().squeeze()

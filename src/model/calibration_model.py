@@ -7,6 +7,6 @@ class CalibrationModel(torch.nn.Module):
         super().__init__()
         self.temperature = torch.nn.Parameter(torch.ones(1) * 1.5)
 
-    def forward(self, logits):
-        return logits / self.temperature
+    def forward(self, logits, device=torch.device("cpu")):
+        return logits / self.temperature.to(device)
         

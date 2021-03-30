@@ -352,7 +352,7 @@ class SegmentationSessionTorch:
         )
 
         def closure():
-            new_logits = calibration_model(all_logits)
+            new_logits = calibration_model(all_logits, self.device)
             loss = calibration_loss(new_logits, all_labels)
             loss.backward()
             return loss

@@ -79,6 +79,7 @@ def preprocess(
             labels = torch.round(labels)
         else:
             labels = torch.tensor(labels, dtype=torch.float32)
+            mask = torch.ones((tile_size,tile_size), dtype=torch.int32)
 
         if one_pixel_mask:
             labels_one = torch.zeros((tile_size,tile_size), dtype=torch.float32)
@@ -88,9 +89,6 @@ def preprocess(
             labels_one[pi][pj] = labels[pi][pj]
             mask[pi][pj] = torch.ones((1,))
             labels = labels_one
-
-        else:    
-            mask = torch.ones((tile_size,tile_size), dtype=torch.int32)
                     
         labels = torch.nn.functional.pad(labels, (pad,pad,pad,pad))
         mask = torch.nn.functional.pad(mask, (pad,pad,pad,pad))

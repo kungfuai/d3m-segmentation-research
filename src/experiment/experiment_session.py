@@ -56,7 +56,7 @@ class ExperimentSession:
                         run_condition = condition
 
                     train_args = self.set_train_args(train_size, run_condition, k, self.args.use_pseudo_labels)
-                    eval_args = self.set_eval_args(train_size, run_condition, k, self.args.use_pseudo_labels)
+                    eval_args = self.set_eval_args(train_size, run_condition, k)
 
                     print(f'\nRunning training session {k+1}/{self.args.duplicates} -- TRAIN SIZE = {train_size}, CONDITION = {run_condition}\n')
                     if self.args.framework == 'tensorflow':
@@ -78,24 +78,25 @@ class ExperimentSession:
         setattr(train_args, "seed", self.args.seed)
 
         if self.args.duplicates > 1:
-            records_str = f'segmentation-train-{train_size}-{k}'
+            train_records_str = f'segmentation-train-{train_size}-{k}'
             model_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}-{k}', 'train')
         else:
-            records_str = f'segmentation-train-{train_size}'
+            train_records_str = f'segmentation-train-{train_size}'
             model_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}', 'train')
 
+        val_records_str = 'segmentation-val'
         if pseudo_labels:
-            records_str += '-pseudo'
+            train_records_str += '-pseudo'
+            val_records_str += '-pseudo'
             setattr(train_args, "model_weights", os.path.join(model_dir, 'model.pth'))
         
         records = os.path.join(self.args.data_dir, f'{records_str}.tfrecord')
             
-        setattr(train_args, "train_records", records)
-        setattr(
-            train_args,
-            "val_records",
-            os.path.join(self.args.data_dir, f'segmentation-val.tfrecord')
-        )
+        train_records = os.path.join(self.args.data_dir, f'{train_records_str}.tfrecord')
+        val_records = os.path.join(self.args.data_dir, f'{val_records_str}.tfrecord')
+
+        setattr(train_args, "train_records", train_records)
+        setattr(train_args, "val_records", val_records)
         setattr(train_args, "num_classes", self.args.num_classes)
         setattr(train_args, "batch_size", self.args.batch_size)
         setattr(train_args, "shuffle_buffer_size", train_size)
@@ -123,7 +124,7 @@ class ExperimentSession:
 
         return train_args
 
-    def set_eval_args(self, train_size, condition, k, pseudo_labels):
+    def set_eval_args(self, train_size, condition, k):
 
         eval_args = EvaluationSessionArgParser().parse_args([])
 
