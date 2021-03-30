@@ -79,11 +79,14 @@ class ExperimentSession:
 
         if self.args.duplicates > 1:
             records_str = f'segmentation-train-{train_size}-{k}'
+            model_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}-{k}', 'train')
         else:
             records_str = f'segmentation-train-{train_size}'
+            model_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}', 'train')
 
         if pseudo_labels:
             records_str += '-pseudo'
+            setattr(train_args, "model_weights", os.path.join(model_dir, 'model.pth'))
         
         records = os.path.join(self.args.data_dir, f'{records_str}.tfrecord')
             
@@ -116,12 +119,6 @@ class ExperimentSession:
         setattr(train_args, "data_parameters", self.args.data_parameters)
         setattr(train_args, "calibrate", self.args.calibrate)
         setattr(train_args, "super_loss", self.args.super_loss)
-
-        if self.args.duplicates > 1:
-            model_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}-{k}', 'train')
-        else:
-            model_dir = os.path.join(self.args.log_dir, f'{train_size}-{condition}', 'train')
-        setattr(train_args, "model_weights", os.path.join(model_dir, 'model.pth'))
         setattr(train_args, "pseudo_label_conf_threshold", self.args.pseudo_label_conf_threshold)
 
         return train_args
