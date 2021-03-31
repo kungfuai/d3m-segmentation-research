@@ -70,7 +70,7 @@ class SegmentationSessionTorch:
             f.write(','.join(metrics) + '\n')
 
     def load_data(self):
-
+        
         train_dataset = TFRecordDataset(
             self.args.train_records,
             index_path=None,
@@ -80,7 +80,8 @@ class SegmentationSessionTorch:
                 one_image_label=self.args.one_image_label,
                 one_pixel_mask=self.args.one_pixel_mask,
                 tile_size=self.args.tile_size,
-                conf_threshold=self.args.pseudo_label_conf_threshold
+                conf_threshold=self.args.pseudo_label_conf_threshold,
+                estonia_data=self.args.estonia_data
             )
         )
 
@@ -99,7 +100,8 @@ class SegmentationSessionTorch:
                     one_image_label=self.args.one_image_label,
                     one_pixel_mask=self.args.one_pixel_mask,
                     tile_size=self.args.tile_size,
-                    conf_threshold=self.args.pseudo_label_conf_threshold
+                    conf_threshold=self.args.pseudo_label_conf_threshold,
+                    estonia_data=self.args.estonia_data
                 )
             )
 

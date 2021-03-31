@@ -48,7 +48,7 @@ def convert_estonia_labels(labels, binary):
 
     return labels
 
-def load_ethiopia_data(sentinel_folder, labels_file, tile_size, num_samples=600):
+def load_ethiopia_data(sentinel_folder, labels_file, tile_size, num_samples=800):
     
     labels_img = rasterio.open(labels_file)
     labels = labels_img.read(1)
@@ -94,7 +94,10 @@ def load_ethiopia_data(sentinel_folder, labels_file, tile_size, num_samples=600)
             geo_bounds[1][0],
         )
         bands['clc_data'] = labels[min_x:max_x+1, min_y: max_y+1] 
-        bands = standardize_sizes(bands)
+
+        if not check_matching_size(bands):
+            continue
+
         bands['clc_data'] = convert_ethiopia_labels(bands['clc_data'])
 
         tiles = split(bands, tile_size, tiles, estonia_data=False)
@@ -107,18 +110,15 @@ def load_ethiopia_data(sentinel_folder, labels_file, tile_size, num_samples=600)
 
     return tiles
 
-def standardize_sizes(bands):
+def check_matching_size(bands):
 
     img_x, img_y = bands["B1"].shape
     label_x, label_y = bands['clc_data'].shape
 
-    min_x = min(img_x, label_x)
-    min_y = min(img_y, label_y)
-
-    for band_name in sentinel_channels[:-1] + ['clc_data']:
-        bands[band_name] = bands[band_name][:min_x, :min_y]
-
-    return bands
+    if img_x != label_x or img_y != label_y:
+        return False
+    else:
+        return True
 
 def convert_ethiopia_labels(labels):
 
@@ -150,15 +150,13 @@ def convert_ethiopia_labels(labels):
 
 def split(bands, tile_size, tiles=[], estonia_data=True):
 
+    bands_10m = ['B04', 'B03', 'B02', 'B08']
+    bands_20m = ['B05', 'B06', 'B07', 'B8A', 'B11', 'B12']
+    bands_60m = ['B01', 'B09']
+
     if estonia_data:
-        bands_10m = ['B04', 'B03', 'B02', 'B08']
-        bands_20m = ['B05', 'B06', 'B07', 'B8A', 'B11', 'B12']
-        bands_60m = ['B01', 'B09']
         names = band_names
-    else:
-        bands_10m = ['B4', 'B3', 'B2', 'B8']
-        bands_20m = ['B5', 'B6', 'B7', 'B8A', 'B11', 'B12']
-        bands_60m = ['B1', 'B9']       
+    else:   
         names = sentinel_channels[:-1]
 
     num_tiles = bands['clc_data'].shape[0] // tile_size
@@ -180,7 +178,9 @@ def split(bands, tile_size, tiles=[], estonia_data=True):
             tile_bands['clc_data'] = clc
 
             for band_name in names:
-                if band_name in bands_10m:
+                if not estonia_data:
+                    pixels = tile_size
+                elif band_name in bands_10m:
                     pixels = tile_size
                 elif band_name in bands_20m:
                     pixels = tile_size // 2

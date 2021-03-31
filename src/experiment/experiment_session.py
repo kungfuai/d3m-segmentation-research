@@ -89,9 +89,7 @@ class ExperimentSession:
             train_records_str += '-pseudo'
             val_records_str += '-pseudo'
             setattr(train_args, "model_weights", os.path.join(model_dir, 'model.pth'))
-        
-        records = os.path.join(self.args.data_dir, f'{records_str}.tfrecord')
-            
+                    
         train_records = os.path.join(self.args.data_dir, f'{train_records_str}.tfrecord')
         val_records = os.path.join(self.args.data_dir, f'{val_records_str}.tfrecord')
 
@@ -121,6 +119,7 @@ class ExperimentSession:
         setattr(train_args, "calibrate", self.args.calibrate)
         setattr(train_args, "super_loss", self.args.super_loss)
         setattr(train_args, "pseudo_label_conf_threshold", self.args.pseudo_label_conf_threshold)
+        setattr(train_args, "estonia_data", self.args.estonia_data)
 
         return train_args
 
@@ -156,6 +155,7 @@ class ExperimentSession:
 
         calibration_temp = os.path.join(self.log_dir, 'train', 'calibration-temp.pth')
         setattr(eval_args, "calibration_temp", calibration_temp)
+        setattr(eval_args, "estonia_data", self.args.estonia_data)
 
         return eval_args
 
@@ -185,6 +185,7 @@ class ExperimentSession:
 
         calibration_temp = os.path.join(model_dir, 'train', 'calibration-temp.pth')
         setattr(update_args, "calibration_temp", calibration_temp)
+        setattr(update_args, "estonia_data", self.args.estonia_data)
 
         return update_args
 

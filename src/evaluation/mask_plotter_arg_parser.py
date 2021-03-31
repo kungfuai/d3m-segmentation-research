@@ -46,3 +46,9 @@ class MaskPlotterArgParser(ArgumentParser):
             default=126,
             help="Size of Sentinel-2 image tiles (in pixels)",
         )
+        self.add_argument(
+            "--estonia_data",
+            type=bool,
+            default=True,
+            help="Where using land cover dataset from Estonia or Ethiopia",
+        )

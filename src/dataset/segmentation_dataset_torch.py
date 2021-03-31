@@ -12,11 +12,15 @@ def preprocess(
     one_image_label=False,
     one_pixel_mask=False,
     tile_size=126,
-    conf_threshold=0
+    conf_threshold=0,
+    estonia_data=True
 ):
-
-    medium = tile_size // 2
-    small = tile_size // 6
+    if estonia_data:
+        medium = tile_size // 2
+        small = tile_size // 6
+    else:
+        medium = tile_size
+        small = tile_size
 
     B01  = normalize(img_dict, 'B01', small)
     B02  = normalize(img_dict, 'B02', tile_size)
@@ -34,23 +38,24 @@ def preprocess(
     bands_20m = torch.stack([B05, B06, B07, B8A, B11, B12], axis=2)
     bands_60m = torch.stack([B01, B09], axis=2)
     
-    bands_20m = torch.unsqueeze(bands_20m.permute(2,0,1), 0)
-    bands_20m = torch.nn.functional.interpolate(
-        bands_20m, 
-        size=(tile_size,tile_size),
-        mode='bicubic',
-        align_corners=False
-    )
-    bands_20m = torch.squeeze(bands_20m).permute(1,2,0)
+    if estonia_data:
+        bands_20m = torch.unsqueeze(bands_20m.permute(2,0,1), 0)
+        bands_20m = torch.nn.functional.interpolate(
+            bands_20m, 
+            size=(tile_size,tile_size),
+            mode='bicubic',
+            align_corners=False
+        )
+        bands_20m = torch.squeeze(bands_20m).permute(1,2,0)
 
-    bands_60m = torch.unsqueeze(bands_60m.permute(2,0,1), 0)
-    bands_60m = torch.nn.functional.interpolate(
-        bands_60m, 
-        size=(tile_size,tile_size),
-        mode='bicubic',
-        align_corners=False
-    )
-    bands_60m = torch.squeeze(bands_60m).permute(1,2,0)
+        bands_60m = torch.unsqueeze(bands_60m.permute(2,0,1), 0)
+        bands_60m = torch.nn.functional.interpolate(
+            bands_60m, 
+            size=(tile_size,tile_size),
+            mode='bicubic',
+            align_corners=False
+        )
+        bands_60m = torch.squeeze(bands_60m).permute(1,2,0)
 
     img = torch.cat(
         [bands_10m, bands_20m, bands_60m], 

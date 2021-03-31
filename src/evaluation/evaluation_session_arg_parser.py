@@ -75,3 +75,9 @@ class EvaluationSessionArgParser(ArgumentParser):
             default='logs/',
             help="Temperature of trained calibration model - only used if calibrate == True",
         )
+        self.add_argument(
+            "--estonia_data",
+            type=bool,
+            default=True,
+            help="Where using land cover dataset from Estonia or Ethiopia",
+        )

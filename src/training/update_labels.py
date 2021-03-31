@@ -50,7 +50,8 @@ class UpdateLabels:
             shuffle_queue_size=0,
             transform=partial(
                 preprocess,
-                tile_size=self.args.tile_size
+                tile_size=self.args.tile_size,
+                estonia_data=self.args.estonia_data
             )
         )
 

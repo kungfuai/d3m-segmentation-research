@@ -143,3 +143,9 @@ class SegmentationSessionArgParser(ArgumentParser):
             default=0,
             help="If using pseudo labels for this training run - at what confidence should they be thresholded?",
         )
+        self.add_argument(
+            "--estonia_data",
+            type=bool,
+            default=True,
+            help="Where using land cover dataset from Estonia or Ethiopia",
+        )
