@@ -48,7 +48,7 @@ def convert_estonia_labels(labels, binary):
 
     return labels
 
-def load_ethiopia_data(sentinel_folder, labels_file, tile_size, num_samples=800):
+def load_ethiopia_data(sentinel_folder, labels_file, tile_size, num_samples=1036):
     
     labels_img = rasterio.open(labels_file)
     labels = labels_img.read(1)
@@ -83,12 +83,12 @@ def load_ethiopia_data(sentinel_folder, labels_file, tile_size, num_samples=800)
             continue
 
         geo_bounds = glgh.bounds(geohash)
-        max_y, min_x = rasterio.transform.rowcol(
+        max_x, min_y = rasterio.transform.rowcol(
             labels_img.transform, 
             geo_bounds[0][1], 
             geo_bounds[0][0],
         )
-        min_y, max_x = rasterio.transform.rowcol(
+        min_x, max_y = rasterio.transform.rowcol(
             labels_img.transform, 
             geo_bounds[1][1], 
             geo_bounds[1][0],
